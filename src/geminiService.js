@@ -13,7 +13,7 @@ const genAI = new GoogleGenerativeAI(API_KEY);
 export const generateHealingLetter = async (userInput) => {
   try {
     // 使用 gemini-pro 模型(穩定版)
-    const model = genAI.getGenerativeModel({ model: 'gemini-pro' });
+    const model = genAI.getGenerativeModel({ model: 'gemini-2.5-flash' });
 
     const prompt = `你是一位溫柔、有同理心的心靈陪伴者,請為以下使用者撰寫一封療癒信:
 

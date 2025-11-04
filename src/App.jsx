@@ -46,7 +46,7 @@ const HealingLetterApp = () => {
       const q = query(
         lettersRef,
         where('userId', '==', userId),
-        orderBy('createdAt', 'asc')
+        orderBy('createdAt', 'desc')
       );
       
       const querySnapshot = await getDocs(q);

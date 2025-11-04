@@ -74,7 +74,7 @@ ${userInput}
 // 生成趨勢分析
 export const generateTrendAnalysis = async (letters) => {
   try {
-    const model = genAI.getGenerativeModel({ model: 'gemini-pro' });
+    const model = genAI.getGenerativeModel({ model: 'gemini-2.5-flash' });
 
     // 準備信件摘要
     const lettersSummary = letters.map((letter, index) => {
@@ -151,7 +151,7 @@ ${lettersSummary}
 // 分析情緒標籤(用 AI 判斷)
 export const analyzeEmotion = async (text) => {
   try {
-    const model = genAI.getGenerativeModel({ model: 'gemini-pro' });
+    const model = genAI.getGenerativeModel({ model: 'gemini-2.5-flash' });
 
     const prompt = `請分析以下文字的主要情緒,只回答一個英文單字:
 

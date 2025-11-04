@@ -61,7 +61,7 @@ const HealingLetterApp = () => {
         });
       });
       
-      setLetters(loadedLetters);
+      setLetters(loadedLetters.reverse());
       console.log('載入了', loadedLetters.length, '封信件');
 
       // 如果有 4 封或以上,載入趨勢分析

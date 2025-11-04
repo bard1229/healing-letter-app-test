@@ -12,6 +12,7 @@ const genAI = new GoogleGenerativeAI(API_KEY);
 // 生成療癒信
 export const generateHealingLetter = async (userInput) => {
   try {
+    // 使用 gemini-pro 模型(穩定版)
     const model = genAI.getGenerativeModel({ model: 'gemini-pro' });
 
     const prompt = `你是一位溫柔、有同理心的心靈陪伴者,請為以下使用者撰寫一封療癒信:
@@ -49,17 +50,21 @@ ${userInput}
     const response = result.response;
     const text = response.text();
     
-    console.log('Gemini 回應:', text);
+    console.log('Gemini 回應成功,長度:', text.length);
     return text;
 
   } catch (error) {
     console.error('Gemini API 錯誤:', error);
     
-    // 如果 API 失敗,返回友善的錯誤訊息
-    if (error.message?.includes('API_KEY')) {
+    // 詳細的錯誤處理
+    if (error.message?.includes('API_KEY') || error.message?.includes('API key')) {
       throw new Error('API Key 設定錯誤,請檢查環境變數');
-    } else if (error.message?.includes('quota')) {
+    } else if (error.message?.includes('quota') || error.message?.includes('429')) {
       throw new Error('API 使用量已達上限,請稍後再試');
+    } else if (error.message?.includes('404') || error.message?.includes('not found')) {
+      throw new Error('API 模型不可用,請聯繫開發者');
+    } else if (error.message?.includes('403') || error.message?.includes('permission')) {
+      throw new Error('API 權限錯誤,請檢查 API Key 設定');
     } else {
       throw new Error('生成信件時發生錯誤,請稍後再試');
     }
@@ -69,7 +74,7 @@ ${userInput}
 // 生成趨勢分析
 export const generateTrendAnalysis = async (letters) => {
   try {
-    const model = genAI.getGenerativeModel({ model: 'gemini-1.5-flash' });
+    const model = genAI.getGenerativeModel({ model: 'gemini-pro' });
 
     // 準備信件摘要
     const lettersSummary = letters.map((letter, index) => {
@@ -125,16 +130,18 @@ ${lettersSummary}
     const response = result.response;
     const text = response.text();
     
-    console.log('Gemini 趨勢分析:', text);
+    console.log('Gemini 趨勢分析成功,長度:', text.length);
     return text;
 
   } catch (error) {
     console.error('Gemini 趨勢分析錯誤:', error);
     
-    if (error.message?.includes('API_KEY')) {
+    if (error.message?.includes('API_KEY') || error.message?.includes('API key')) {
       throw new Error('API Key 設定錯誤,請檢查環境變數');
-    } else if (error.message?.includes('quota')) {
+    } else if (error.message?.includes('quota') || error.message?.includes('429')) {
       throw new Error('API 使用量已達上限,請稍後再試');
+    } else if (error.message?.includes('404') || error.message?.includes('not found')) {
+      throw new Error('API 模型不可用,請聯繫開發者');
     } else {
       throw new Error('生成趨勢分析時發生錯誤,請稍後再試');
     }
@@ -144,7 +151,7 @@ ${lettersSummary}
 // 分析情緒標籤(用 AI 判斷)
 export const analyzeEmotion = async (text) => {
   try {
-    const model = genAI.getGenerativeModel({ model: 'gemini-1.5-flash' });
+    const model = genAI.getGenerativeModel({ model: 'gemini-pro' });
 
     const prompt = `請分析以下文字的主要情緒,只回答一個英文單字:
 
@@ -169,6 +176,7 @@ export const analyzeEmotion = async (text) => {
     const validEmotions = ['stressed', 'sad', 'confused', 'lonely', 'anxious', 'happy', 'neutral'];
     
     if (validEmotions.includes(emotion)) {
+      console.log('情緒分析結果:', emotion);
       return emotion;
     } else {
       console.warn('AI 返回了無效的情緒標籤:', emotion, '使用預設值 neutral');
@@ -177,7 +185,7 @@ export const analyzeEmotion = async (text) => {
 
   } catch (error) {
     console.error('情緒分析錯誤:', error);
-    // 如果 API 失敗,使用簡單的關鍵字判斷
+    // 如果 API 失敗,使用簡單的關鍵字判斷作為備用
     const lowerText = text.toLowerCase();
     if (lowerText.includes('壓力') || lowerText.includes('累') || lowerText.includes('疲憊')) return 'stressed';
     if (lowerText.includes('難過') || lowerText.includes('傷心') || lowerText.includes('委屈')) return 'sad';

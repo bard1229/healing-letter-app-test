@@ -61,6 +61,7 @@ const HealingLetterApp = () => {
         });
       });
       
+      // 反轉順序,讓最舊的在前面
       setLetters(loadedLetters.reverse());
       console.log('載入了', loadedLetters.length, '封信件');
 

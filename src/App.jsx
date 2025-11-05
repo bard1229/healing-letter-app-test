@@ -425,29 +425,6 @@ const HealingLetterApp = () => {
                         再 {4 - letters.length} 封信,就能看到你的心情趨勢分析 ✨
                       </p>
                     )}
-                    {letters.length >= 4 && trendAnalyses.length === 0 && (
-                      <button
-                        onClick={() => generateAndSaveTrendAnalysis(letters)}
-                        className="w-full mt-4 py-3 rounded-2xl bg-gradient-to-r from-blue-500 to-purple-500 text-white font-medium hover:shadow-lg transition-all flex items-center justify-center gap-2"
-                      >
-                        <TrendingUp size={20} />
-                        生成我的心情趨勢分析
-                      </button>
-                    )}
-                    {letters.length >= 4 && trendAnalyses.length > 0 && (
-                      <div className="mt-4 space-y-2">
-                        <p className="text-center text-sm text-blue-600">
-                          ✨ 你有 {trendAnalyses.length} 份趨勢分析!點右上角「趨勢」查看
-                        </p>
-                        <button
-                          onClick={() => generateAndSaveTrendAnalysis(letters)}
-                          className="w-full py-2 rounded-2xl bg-blue-100 text-blue-700 font-medium hover:bg-blue-200 transition-all flex items-center justify-center gap-2"
-                        >
-                          <TrendingUp size={16} />
-                          生成新的趨勢分析
-                        </button>
-                      </div>
-                    )}
                   </div>
                 )}
 

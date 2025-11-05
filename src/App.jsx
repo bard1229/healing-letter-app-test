@@ -30,7 +30,7 @@ const HealingLetterApp = () => {
       } else {
         console.log('使用者未登入');
         setLetters([]);
-        setTrendAnalysis(null);
+        setTrendAnalyses([]);
       }
     });
 
@@ -64,7 +64,7 @@ const HealingLetterApp = () => {
       console.log('載入了', loadedLetters.length, '封信件');
 
       if (loadedLetters.length >= 4) {
-        await loadTrendAnalysis(userId);
+        await loadTrendAnalyses(userId);
       }
     } catch (error) {
       console.error('載入資料失敗:', error);
@@ -74,7 +74,7 @@ const HealingLetterApp = () => {
     }
   };
 
-  const loadTrendAnalysis = async (userId) => {
+  const loadTrendAnalyses = async (userId) => {
     try {
       const trendRef = collection(db, 'trendAnalysis');
       const q = query(
@@ -84,16 +84,20 @@ const HealingLetterApp = () => {
       );
       
       const querySnapshot = await getDocs(q);
+      const analyses = [];
       
-      if (!querySnapshot.empty) {
-        const latestTrend = querySnapshot.docs[0].data();
-        setTrendAnalysis({
-          id: querySnapshot.docs[0].id,
-          date: latestTrend.createdAt?.toDate().toISOString() || new Date().toISOString(),
-          content: latestTrend.content
+      querySnapshot.forEach((doc) => {
+        const data = doc.data();
+        analyses.push({
+          id: doc.id,
+          date: data.createdAt?.toDate().toISOString() || new Date().toISOString(),
+          content: data.content,
+          letterCount: data.letterCount || 4
         });
-        console.log('載入了趨勢分析');
-      }
+      });
+      
+      setTrendAnalyses(analyses);
+      console.log('載入了', analyses.length, '份趨勢分析');
     } catch (error) {
       console.error('載入趨勢分析失敗:', error);
     }
@@ -130,7 +134,7 @@ const HealingLetterApp = () => {
         userId: user.uid,
         userEmail: user.email,
         content: analysis.content,
-        letterCount: letters.length + 1,
+        letterCount: letters.length,
         createdAt: Timestamp.now()
       });
       
@@ -148,7 +152,7 @@ const HealingLetterApp = () => {
       setCurrentLetter(null);
       setShowHistory(false);
       setShowTrend(false);
-      setTrendAnalysis(null);
+      setTrendAnalyses([]);
       console.log('登出成功');
     } catch (error) {
       console.error('登出失敗:', error);
@@ -217,11 +221,9 @@ const HealingLetterApp = () => {
     try {
       console.log('開始呼叫 Gemini API...');
       
-      // 使用 Gemini AI 生成信件內容
       const content = await generateHealingLetter(input);
       console.log('Gemini 回應成功');
       
-      // 使用 Gemini AI 分析情緒
       const emotion = await analyzeEmotion(input);
       console.log('情緒分析:', emotion);
       
@@ -244,18 +246,6 @@ const HealingLetterApp = () => {
         setLetters(newLetters);
         setCurrentLetter(letterWithId);
         setInput('');
-
-        if (newLetters.length === 4 && !trendAnalysis) {
-          console.log('達到 4 封信,生成趨勢分析...');
-          setTimeout(() => {
-            generateAndSaveTrendAnalysis(newLetters);
-          }, 1000);
-        } else if (newLetters.length > 4 && newLetters.length % 4 === 0) {
-          console.log('累積', newLetters.length, '封信,更新趨勢分析...');
-          setTimeout(() => {
-            generateAndSaveTrendAnalysis(newLetters);
-          }, 1000);
-        }
       }
     } catch (error) {
       console.error('生成信件失敗:', error);
@@ -269,7 +259,6 @@ const HealingLetterApp = () => {
     try {
       console.log('開始生成趨勢分析...');
       
-      // 使用 Gemini AI 生成趨勢分析
       const content = await generateTrendAnalysis(allLetters);
       console.log('趨勢分析生成成功');
       
@@ -281,10 +270,13 @@ const HealingLetterApp = () => {
       const docId = await saveTrendAnalysisToFirestore(analysis);
       
       if (docId) {
-        setTrendAnalysis({
+        const newAnalysis = {
           id: docId,
+          letterCount: allLetters.length,
           ...analysis
-        });
+        };
+        
+        setTrendAnalyses([newAnalysis, ...trendAnalyses]);
         setShowTrend(true);
       }
     } catch (error) {
@@ -336,7 +328,7 @@ const HealingLetterApp = () => {
               <Clock size={16} />
               <span className="hidden sm:inline">歷史</span> ({letters.length})
             </button>
-            {trendAnalysis && (
+            {trendAnalyses.length > 0 && (
               <button
                 onClick={() => { setShowTrend(!showTrend); setShowHistory(false); setCurrentLetter(null); }}
                 className="px-4 py-2 rounded-full bg-blue-100 text-blue-700 hover:bg-blue-200 transition-all flex items-center gap-2"
@@ -433,7 +425,7 @@ const HealingLetterApp = () => {
                         再 {4 - letters.length} 封信,就能看到你的心情趨勢分析 ✨
                       </p>
                     )}
-                    {letters.length >= 4 && !trendAnalysis && (
+                    {letters.length >= 4 && trendAnalyses.length === 0 && (
                       <button
                         onClick={() => generateAndSaveTrendAnalysis(letters)}
                         className="w-full mt-4 py-3 rounded-2xl bg-gradient-to-r from-blue-500 to-purple-500 text-white font-medium hover:shadow-lg transition-all flex items-center justify-center gap-2"
@@ -442,17 +434,17 @@ const HealingLetterApp = () => {
                         生成我的心情趨勢分析
                       </button>
                     )}
-                    {letters.length >= 4 && trendAnalysis && (
+                    {letters.length >= 4 && trendAnalyses.length > 0 && (
                       <div className="mt-4 space-y-2">
                         <p className="text-center text-sm text-blue-600">
-                          ✨ 你已經有趨勢分析了!點右上角「趨勢」查看
+                          ✨ 你有 {trendAnalyses.length} 份趨勢分析!點右上角「趨勢」查看
                         </p>
                         <button
                           onClick={() => generateAndSaveTrendAnalysis(letters)}
                           className="w-full py-2 rounded-2xl bg-blue-100 text-blue-700 font-medium hover:bg-blue-200 transition-all flex items-center justify-center gap-2"
                         >
                           <TrendingUp size={16} />
-                          重新生成趨勢分析
+                          生成新的趨勢分析
                         </button>
                       </div>
                     )}
@@ -484,8 +476,7 @@ const HealingLetterApp = () => {
                       寫下一封信
                     </button>
 
-                    {/* 第 4 封信的特殊提示 */}
-                    {letters.length === 4 && !trendAnalysis && (
+                    {letters.length === 4 && trendAnalyses.length === 0 && (
                       <div className="mt-4 p-6 bg-gradient-to-r from-blue-50 to-purple-50 rounded-2xl border-2 border-blue-200 animate-fade-in">
                         <div className="flex items-center gap-2 text-blue-700 mb-3">
                           <Sparkles size={24} />
@@ -505,8 +496,7 @@ const HealingLetterApp = () => {
                       </div>
                     )}
 
-                    {/* 第 8、12、16... 封的更新提示 */}
-                    {letters.length > 4 && letters.length % 4 === 0 && trendAnalysis && (
+                    {letters.length > 4 && letters.length % 4 === 0 && trendAnalyses.length > 0 && (
                       <div className="mt-4 p-6 bg-gradient-to-r from-purple-50 to-pink-50 rounded-2xl border-2 border-purple-200 animate-fade-in">
                         <div className="flex items-center gap-2 text-purple-700 mb-3">
                           <TrendingUp size={24} />
@@ -571,7 +561,7 @@ const HealingLetterApp = () => {
               </div>
             )}
 
-            {showTrend && trendAnalysis && (
+            {showTrend && trendAnalyses.length > 0 && (
               <div className="animate-fade-in">
                 <div className="flex items-center gap-3 mb-6">
                   <button
@@ -586,12 +576,36 @@ const HealingLetterApp = () => {
                   </div>
                 </div>
                 
-                <div className="bg-white/90 backdrop-blur-sm rounded-3xl shadow-xl p-8">
-                  <div className="prose prose-lg max-w-none">
-                    <div className="whitespace-pre-wrap text-gray-700 leading-relaxed">
-                      {trendAnalysis.content}
+                <div className="space-y-6">
+                  {trendAnalyses.map((analysis, index) => (
+                    <div key={analysis.id} className="bg-white/90 backdrop-blur-sm rounded-3xl shadow-xl p-8">
+                      <div className="flex items-center justify-between mb-4 pb-4 border-b border-gray-200">
+                        <div className="flex items-center gap-2">
+                          {index === 0 && (
+                            <span className="px-3 py-1 bg-blue-100 text-blue-700 text-sm rounded-full font-medium">
+                              最新
+                            </span>
+                          )}
+                          <span className="text-gray-600">
+                            第 {trendAnalyses.length - index} 次分析
+                          </span>
+                        </div>
+                        <div className="text-right text-sm text-gray-500">
+                          <div>{new Date(analysis.date).toLocaleDateString('zh-TW', {
+                            year: 'numeric',
+                            month: 'long',
+                            day: 'numeric'
+                          })}</div>
+                          <div className="text-xs">基於 {analysis.letterCount} 封信件</div>
+                        </div>
+                      </div>
+                      <div className="prose prose-lg max-w-none">
+                        <div className="whitespace-pre-wrap text-gray-700 leading-relaxed">
+                          {analysis.content}
+                        </div>
+                      </div>
                     </div>
-                  </div>
+                  ))}
                 </div>
               </div>
             )}

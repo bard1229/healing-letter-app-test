@@ -9,10 +9,37 @@ if (!API_KEY) {
 
 const genAI = new GoogleGenerativeAI(API_KEY);
 
+// 延遲函數
+const delay = (ms) => new Promise(resolve => setTimeout(resolve, ms));
+
+// 帶重試的 API 呼叫
+const generateContentWithRetry = async (model, prompt, maxRetries = 3) => {
+  for (let attempt = 1; attempt <= maxRetries; attempt++) {
+    try {
+      console.log(`嘗試第 ${attempt} 次呼叫 Gemini API...`);
+      const result = await model.generateContent(prompt);
+      return result;
+    } catch (error) {
+      const isOverloaded = error.message?.includes('503') || error.message?.includes('overloaded');
+      const isLastAttempt = attempt === maxRetries;
+      
+      if (isOverloaded && !isLastAttempt) {
+        const waitTime = attempt * 2000; // 2秒, 4秒, 6秒
+        console.log(`伺服器忙碌中,${waitTime/1000} 秒後重試...`);
+        await delay(waitTime);
+        continue;
+      }
+      
+      // 最後一次失敗或非 503 錯誤,直接拋出
+      throw error;
+    }
+  }
+};
+
 // 生成療癒信
 export const generateHealingLetter = async (userInput) => {
   try {
-    // 使用 gemini-pro 模型(穩定版)
+    // 使用 gemini-2.5-flash 模型(最新版)
     const model = genAI.getGenerativeModel({ model: 'gemini-2.5-flash' });
 
     const prompt = `你是一位溫柔、有同理心的心靈陪伴者,請為以下使用者撰寫一封療癒信:
@@ -40,13 +67,13 @@ ${userInput}
 【重要】
 - 請用繁體中文回應
 - 以「親愛的你:」或類似溫暖的稱呼開頭
-- 以「永遠支持你的\n一封給你的信 ✨」結尾
+- 以「一直陪伴你的朋友 ✨」結尾
 - 不要使用 Markdown 格式(如 **、##等)
 - 直接輸出信件內容,不需要其他說明
 
 請直接生成信件內容:`;
 
-    const result = await model.generateContent(prompt);
+    const result = await generateContentWithRetry(model, prompt);
     const response = result.response;
     const text = response.text();
     
@@ -65,6 +92,10 @@ ${userInput}
       throw new Error('API 模型不可用,請聯繫開發者');
     } else if (error.message?.includes('403') || error.message?.includes('permission')) {
       throw new Error('API 權限錯誤,請檢查 API Key 設定');
+    } else if (error.message?.includes('503') || error.message?.includes('overloaded')) {
+      throw new Error('伺服器目前忙碌中,已自動重試但仍無法完成。請稍後再試 (1-2 分鐘)');
+    } else if (error.message?.includes('503') || error.message?.includes('overloaded')) {
+      throw new Error('伺服器目前忙碌中,已自動重試但仍無法完成。請稍後再試 (1-2 分鐘)');
     } else {
       throw new Error('生成信件時發生錯誤,請稍後再試');
     }
@@ -126,7 +157,7 @@ ${lettersSummary}
 
 請直接生成分析信內容:`;
 
-    const result = await model.generateContent(prompt);
+    const result = await generateContentWithRetry(model, prompt);
     const response = result.response;
     const text = response.text();
     
@@ -168,7 +199,7 @@ export const analyzeEmotion = async (text) => {
 
 請只回答一個最符合的英文單字,不要有其他文字:`;
 
-    const result = await model.generateContent(prompt);
+    const result = await generateContentWithRetry(model, prompt);
     const response = result.response;
     const emotion = response.text().trim().toLowerCase();
     

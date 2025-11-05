@@ -16,7 +16,7 @@ const HealingLetterApp = () => {
   const [letters, setLetters] = useState([]);
   const [showHistory, setShowHistory] = useState(false);
   const [showTrend, setShowTrend] = useState(false);
-  const [trendAnalysis, setTrendAnalysis] = useState(null);
+  const [trendAnalyses, setTrendAnalyses] = useState([]);
   const [loading, setLoading] = useState(false);
 
   useEffect(() => {
@@ -417,7 +417,7 @@ const HealingLetterApp = () => {
                         {isGenerating ? (
                           <>
                             <div className="w-5 h-5 border-2 border-white border-t-transparent rounded-full animate-spin" />
-                            AI 生成中...
+                            正在為你準備一封溫暖的信...
                           </>
                         ) : (
                           <>
@@ -483,6 +483,48 @@ const HealingLetterApp = () => {
                     >
                       寫下一封信
                     </button>
+
+                    {/* 第 4 封信的特殊提示 */}
+                    {letters.length === 4 && !trendAnalysis && (
+                      <div className="mt-4 p-6 bg-gradient-to-r from-blue-50 to-purple-50 rounded-2xl border-2 border-blue-200 animate-fade-in">
+                        <div className="flex items-center gap-2 text-blue-700 mb-3">
+                          <Sparkles size={24} />
+                          <span className="font-medium text-lg">這是你的第 4 封信 ✨</span>
+                        </div>
+                        <p className="text-gray-700 mb-4">
+                          累積了 4 次的心情記錄,現在可以為你生成專屬的心情趨勢分析,
+                          看看這段時間的變化和成長 💙
+                        </p>
+                        <button
+                          onClick={() => generateAndSaveTrendAnalysis(letters)}
+                          className="w-full py-3 rounded-2xl bg-gradient-to-r from-blue-500 to-purple-500 text-white font-medium hover:shadow-lg transition-all flex items-center justify-center gap-2"
+                        >
+                          <TrendingUp size={20} />
+                          為我生成心情趨勢分析
+                        </button>
+                      </div>
+                    )}
+
+                    {/* 第 8、12、16... 封的更新提示 */}
+                    {letters.length > 4 && letters.length % 4 === 0 && trendAnalysis && (
+                      <div className="mt-4 p-6 bg-gradient-to-r from-purple-50 to-pink-50 rounded-2xl border-2 border-purple-200 animate-fade-in">
+                        <div className="flex items-center gap-2 text-purple-700 mb-3">
+                          <TrendingUp size={24} />
+                          <span className="font-medium text-lg">又累積了 4 封信 ✨</span>
+                        </div>
+                        <p className="text-gray-700 mb-4">
+                          你已經寫了 {letters.length} 封信了!
+                          想看看最新的心情趨勢變化嗎?
+                        </p>
+                        <button
+                          onClick={() => generateAndSaveTrendAnalysis(letters)}
+                          className="w-full py-3 rounded-2xl bg-gradient-to-r from-purple-500 to-pink-500 text-white font-medium hover:shadow-lg transition-all flex items-center justify-center gap-2"
+                        >
+                          <TrendingUp size={20} />
+                          更新我的趨勢分析
+                        </button>
+                      </div>
+                    )}
                   </div>
                 )}
               </>

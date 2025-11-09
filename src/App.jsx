@@ -126,33 +126,38 @@ const HealingNoteApp = () => {
       return;
     }
 
-    // 取最近7天的記錄
-    const sevenDaysAgo = new Date();
-    sevenDaysAgo.setDate(sevenDaysAgo.getDate() - 7);
-    
-    const recentLetters = allLetters.filter(l => 
-      new Date(l.date) >= sevenDaysAgo
-    );
+    // 取所有記錄(不限7天,因為可能記錄不多)
+    const recentLetters = allLetters.filter(l => l.emotion);
+
+    if (recentLetters.length === 0) {
+      setEmotionStats({});
+      return;
+    }
 
     const emotionCount = {};
-    const emotionEmoji = {
-      '壓力': '😰',
-      '焦慮': '😰',
-      '難過': '😢',
-      '悲傷': '😢',
-      '迷茫': '🤔',
-      '困惑': '🤔',
-      '開心': '😊',
-      '快樂': '😊',
-      '平靜': '😌',
-      '放鬆': '😌'
+    const emotionMap = {
+      '壓力': { emoji: '😰', name: '壓力' },
+      '焦慮': { emoji: '😰', name: '焦慮' },
+      '緊張': { emoji: '😰', name: '緊張' },
+      '難過': { emoji: '😢', name: '難過' },
+      '悲傷': { emoji: '😢', name: '悲傷' },
+      '失落': { emoji: '😢', name: '失落' },
+      '迷茫': { emoji: '🤔', name: '迷茫' },
+      '困惑': { emoji: '🤔', name: '困惑' },
+      '不安': { emoji: '🤔', name: '不安' },
+      '開心': { emoji: '😊', name: '開心' },
+      '快樂': { emoji: '😊', name: '快樂' },
+      '喜悅': { emoji: '😊', name: '喜悅' },
+      '平靜': { emoji: '😌', name: '平靜' },
+      '放鬆': { emoji: '😌', name: '放鬆' },
+      '安心': { emoji: '😌', name: '安心' }
     };
 
     recentLetters.forEach(letter => {
       if (letter.emotion) {
-        const emotion = letter.emotion;
-        const emoji = emotionEmoji[emotion] || '💭';
-        const key = `${emoji} ${emotion}`;
+        const emotion = letter.emotion.trim();
+        const emotionInfo = emotionMap[emotion] || { emoji: '💭', name: emotion };
+        const key = `${emotionInfo.emoji} ${emotionInfo.name}`;
         emotionCount[key] = (emotionCount[key] || 0) + 1;
       }
     });

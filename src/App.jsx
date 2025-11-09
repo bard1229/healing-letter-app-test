@@ -1,12 +1,15 @@
 import React, { useState, useEffect } from 'react';
-import { Heart, Mic, Send, Clock, TrendingUp, Mail, Sparkles, Home, ArrowLeft, LogOut } from 'lucide-react';
+import { Heart, Mic, Send, Clock, TrendingUp, Mail, Sparkles, Home, ArrowLeft, LogOut, Calendar, BarChart3 } from 'lucide-react';
 import { onAuthStateChanged, signOut } from 'firebase/auth';
 import { collection, addDoc, query, where, getDocs, orderBy, Timestamp } from 'firebase/firestore';
 import { auth, db } from './firebase';
 import LoginPage from './LoginPage';
 import { generateHealingLetter, generateTrendAnalysis, analyzeEmotion } from './geminiService';
 
-const HealingLetterApp = () => {
+// 水獺圖片 (你需要把圖片放到 public 資料夾)
+const OTTER_IMAGE = '/otter.png';
+
+const HealingNoteApp = () => {
   const [user, setUser] = useState(null);
   const [authLoading, setAuthLoading] = useState(true);
   const [input, setInput] = useState('');
@@ -16,8 +19,14 @@ const HealingLetterApp = () => {
   const [letters, setLetters] = useState([]);
   const [showHistory, setShowHistory] = useState(false);
   const [showTrend, setShowTrend] = useState(false);
+  const [showStats, setShowStats] = useState(false);
   const [trendAnalyses, setTrendAnalyses] = useState([]);
   const [loading, setLoading] = useState(false);
+  const [dailyCount, setDailyCount] = useState(0);
+  const [emotionStats, setEmotionStats] = useState({});
+
+  // 免費版每日限制
+  const DAILY_LIMIT = 2;
 
   useEffect(() => {
     const unsubscribe = onAuthStateChanged(auth, (currentUser) => {
@@ -31,6 +40,7 @@ const HealingLetterApp = () => {
         console.log('使用者未登入');
         setLetters([]);
         setTrendAnalyses([]);
+        setDailyCount(0);
       }
     });
 
@@ -63,7 +73,18 @@ const HealingLetterApp = () => {
       setLetters(loadedLetters.reverse());
       console.log('載入了', loadedLetters.length, '封信件');
 
-      if (loadedLetters.length >= 4) {
+      // 計算今日已寫次數
+      const today = new Date().toDateString();
+      const todayLetters = loadedLetters.filter(l => 
+        new Date(l.date).toDateString() === today
+      );
+      setDailyCount(todayLetters.length);
+
+      // 計算情緒統計
+      calculateEmotionStats(loadedLetters);
+
+      // 檢查是否達到趨勢分析條件
+      if (checkConsecutiveDays(loadedLetters) >= 4) {
         await loadTrendAnalyses(userId);
       }
     } catch (error) {
@@ -72,6 +93,80 @@ const HealingLetterApp = () => {
     } finally {
       setLoading(false);
     }
+  };
+
+  // 檢查連續記錄天數
+  const checkConsecutiveDays = (allLetters) => {
+    if (allLetters.length === 0) return 0;
+
+    const dates = [...new Set(allLetters.map(l => 
+      new Date(l.date).toDateString()
+    ))].sort((a, b) => new Date(b) - new Date(a));
+
+    let consecutiveDays = 1;
+    for (let i = 0; i < dates.length - 1; i++) {
+      const current = new Date(dates[i]);
+      const next = new Date(dates[i + 1]);
+      const diffDays = Math.floor((current - next) / (1000 * 60 * 60 * 24));
+      
+      if (diffDays === 1) {
+        consecutiveDays++;
+      } else {
+        break;
+      }
+    }
+
+    return consecutiveDays;
+  };
+
+  // 計算情緒統計
+  const calculateEmotionStats = (allLetters) => {
+    if (allLetters.length === 0) {
+      setEmotionStats({});
+      return;
+    }
+
+    // 取最近7天的記錄
+    const sevenDaysAgo = new Date();
+    sevenDaysAgo.setDate(sevenDaysAgo.getDate() - 7);
+    
+    const recentLetters = allLetters.filter(l => 
+      new Date(l.date) >= sevenDaysAgo
+    );
+
+    const emotionCount = {};
+    const emotionEmoji = {
+      '壓力': '😰',
+      '焦慮': '😰',
+      '難過': '😢',
+      '悲傷': '😢',
+      '迷茫': '🤔',
+      '困惑': '🤔',
+      '開心': '😊',
+      '快樂': '😊',
+      '平靜': '😌',
+      '放鬆': '😌'
+    };
+
+    recentLetters.forEach(letter => {
+      if (letter.emotion) {
+        const emotion = letter.emotion;
+        const emoji = emotionEmoji[emotion] || '💭';
+        const key = `${emoji} ${emotion}`;
+        emotionCount[key] = (emotionCount[key] || 0) + 1;
+      }
+    });
+
+    const total = Object.values(emotionCount).reduce((a, b) => a + b, 0);
+    const stats = {};
+    Object.entries(emotionCount).forEach(([key, count]) => {
+      stats[key] = {
+        count,
+        percentage: Math.round((count / total) * 100)
+      };
+    });
+
+    setEmotionStats(stats);
   };
 
   const loadTrendAnalyses = async (userId) => {
@@ -152,7 +247,9 @@ const HealingLetterApp = () => {
       setCurrentLetter(null);
       setShowHistory(false);
       setShowTrend(false);
+      setShowStats(false);
       setTrendAnalyses([]);
+      setDailyCount(0);
       console.log('登出成功');
     } catch (error) {
       console.error('登出失敗:', error);
@@ -163,6 +260,7 @@ const HealingLetterApp = () => {
   const goHome = () => {
     setShowHistory(false);
     setShowTrend(false);
+    setShowStats(false);
     setCurrentLetter(null);
   };
 
@@ -211,6 +309,12 @@ const HealingLetterApp = () => {
   };
 
   const generateLetter = async () => {
+    // 檢查每日限制
+    if (dailyCount >= DAILY_LIMIT) {
+      alert(`📔 今日記錄已達上限\n\n免費版每天限 ${DAILY_LIMIT} 次記錄\n明天再來記錄新的心情吧! 💙`);
+      return;
+    }
+
     if (!input.trim()) {
       alert('請先告訴我你的心情或煩惱喔 💙');
       return;
@@ -246,6 +350,10 @@ const HealingLetterApp = () => {
         setLetters(newLetters);
         setCurrentLetter(letterWithId);
         setInput('');
+        setDailyCount(dailyCount + 1);
+        
+        // 重新計算情緒統計
+        calculateEmotionStats(newLetters);
       }
     } catch (error) {
       console.error('生成信件失敗:', error);
@@ -300,19 +408,26 @@ const HealingLetterApp = () => {
     return <LoginPage />;
   }
 
+  const consecutiveDays = checkConsecutiveDays(letters);
+  const canGenerateTrend = consecutiveDays >= 4;
+
   return (
     <div className="min-h-screen bg-gradient-to-br from-pink-50 via-purple-50 to-blue-50">
+      {/* Header */}
       <div className="bg-white/80 backdrop-blur-sm border-b border-purple-100 sticky top-0 z-10">
         <div className="max-w-4xl mx-auto px-4 py-4 flex justify-between items-center">
-          <div className="flex items-center gap-2">
-            <Heart className="text-pink-500" fill="currentColor" size={24} />
-            <h1 className="text-xl font-medium text-gray-800">給你的一封信</h1>
+          <div className="flex items-center gap-3">
+            <img src={OTTER_IMAGE} alt="歐特" className="w-10 h-10 object-contain" />
+            <div>
+              <h1 className="text-xl font-medium text-gray-800">HealingNote 療心筆記</h1>
+              <p className="text-xs text-gray-500 hidden sm:block">每一個情緒都值得被理解</p>
+            </div>
           </div>
           <div className="flex gap-2 items-center flex-wrap">
             <span className="text-sm text-gray-600 hidden sm:inline">
               {user.email}
             </span>
-            {(showHistory || showTrend) && (
+            {(showHistory || showTrend || showStats) && (
               <button
                 onClick={goHome}
                 className="px-4 py-2 rounded-full bg-pink-100 text-pink-700 hover:bg-pink-200 transition-all flex items-center gap-2"
@@ -322,16 +437,25 @@ const HealingLetterApp = () => {
               </button>
             )}
             <button
-              onClick={() => { setShowHistory(!showHistory); setShowTrend(false); setCurrentLetter(null); }}
+              onClick={() => { setShowHistory(!showHistory); setShowTrend(false); setShowStats(false); setCurrentLetter(null); }}
               className="px-4 py-2 rounded-full bg-purple-100 text-purple-700 hover:bg-purple-200 transition-all flex items-center gap-2"
             >
               <Clock size={16} />
               <span className="hidden sm:inline">歷史</span> ({letters.length})
             </button>
+            {Object.keys(emotionStats).length > 0 && (
+              <button
+                onClick={() => { setShowStats(!showStats); setShowHistory(false); setShowTrend(false); setCurrentLetter(null); }}
+                className="px-4 py-2 rounded-full bg-blue-100 text-blue-700 hover:bg-blue-200 transition-all flex items-center gap-2"
+              >
+                <BarChart3 size={16} />
+                <span className="hidden sm:inline">統計</span>
+              </button>
+            )}
             {trendAnalyses.length > 0 && (
               <button
-                onClick={() => { setShowTrend(!showTrend); setShowHistory(false); setCurrentLetter(null); }}
-                className="px-4 py-2 rounded-full bg-blue-100 text-blue-700 hover:bg-blue-200 transition-all flex items-center gap-2"
+                onClick={() => { setShowTrend(!showTrend); setShowHistory(false); setShowStats(false); setCurrentLetter(null); }}
+                className="px-4 py-2 rounded-full bg-indigo-100 text-indigo-700 hover:bg-indigo-200 transition-all flex items-center gap-2"
               >
                 <TrendingUp size={16} />
                 <span className="hidden sm:inline">趨勢</span>
@@ -356,40 +480,60 @@ const HealingLetterApp = () => {
           </div>
         ) : (
           <>
-            {!showHistory && !showTrend && (
+            {/* 主頁面 */}
+            {!showHistory && !showTrend && !showStats && (
               <>
+                {/* 首次使用歡迎 */}
                 {!currentLetter && letters.length === 0 && (
                   <div className="text-center mb-8 animate-fade-in">
-                    <div className="inline-block p-4 bg-white/60 rounded-full mb-4">
-                      <Sparkles className="text-purple-500" size={48} />
+                    <div className="inline-block mb-6">
+                      <img src={OTTER_IMAGE} alt="歐特" className="w-32 h-auto mx-auto mb-4" />
                     </div>
-                    <h2 className="text-2xl font-medium text-gray-800 mb-2">
-                      在這裡,你可以說出心裡的話
+                    <h2 className="text-2xl font-medium text-gray-800 mb-4">
+                      你的私密情緒日記 📔
                     </h2>
-                    <p className="text-gray-600">
-                      無論是煩惱、心情,還是想分享的事<br />
-                      這裡會有一封信,溫柔地回應你
-                    </p>
+                    <div className="max-w-2xl mx-auto text-left bg-white/60 rounded-2xl p-6 mb-4">
+                      <p className="text-gray-700 mb-4">
+                        記錄每一天的心情起伏<br />
+                        不只回應你,更幫你看見情緒變化<br />
+                        你的情緒管家 💙
+                      </p>
+                      <div className="space-y-2 text-sm text-gray-600">
+                        <p>1️⃣ 專注情緒健康,溫暖細膩的覺察</p>
+                        <p>2️⃣ 保存記錄,追蹤心情變化</p>
+                        <p>3️⃣ 智能趨勢分析,陪你看見自己的成長</p>
+                      </div>
+                    </div>
                   </div>
                 )}
 
+                {/* 輸入區 */}
                 {!currentLetter && (
                   <div className="bg-white/80 backdrop-blur-sm rounded-3xl shadow-lg p-6 mb-6">
+                    <div className="flex justify-between items-center mb-4">
+                      <h3 className="text-lg font-medium text-gray-700">今日心情記錄</h3>
+                      <div className="text-sm text-gray-500">
+                        今日剩餘: <span className="font-medium text-purple-600">{DAILY_LIMIT - dailyCount}</span> / {DAILY_LIMIT} 次
+                      </div>
+                    </div>
+                    
                     <textarea
                       value={input}
                       onChange={(e) => setInput(e.target.value)}
                       placeholder="告訴我你最近的心情或煩惱..."
                       className="w-full h-32 p-4 border-2 border-purple-100 rounded-2xl focus:border-purple-300 focus:outline-none resize-none text-gray-700"
-                      disabled={isGenerating}
+                      disabled={isGenerating || dailyCount >= DAILY_LIMIT}
                     />
                     
                     <div className="flex gap-3 mt-4">
                       <button
                         onClick={startListening}
-                        disabled={isListening || isGenerating}
+                        disabled={isListening || isGenerating || dailyCount >= DAILY_LIMIT}
                         className={`flex-1 py-3 rounded-2xl font-medium transition-all flex items-center justify-center gap-2 ${
                           isListening
                             ? 'bg-red-500 text-white animate-pulse'
+                            : dailyCount >= DAILY_LIMIT
+                            ? 'bg-gray-200 text-gray-400 cursor-not-allowed'
                             : 'bg-purple-100 text-purple-700 hover:bg-purple-200'
                         }`}
                       >
@@ -399,9 +543,9 @@ const HealingLetterApp = () => {
                       
                       <button
                         onClick={generateLetter}
-                        disabled={isGenerating || !input.trim()}
+                        disabled={isGenerating || !input.trim() || dailyCount >= DAILY_LIMIT}
                         className={`flex-1 py-3 rounded-2xl font-medium transition-all flex items-center justify-center gap-2 ${
-                          isGenerating
+                          isGenerating || dailyCount >= DAILY_LIMIT
                             ? 'bg-gray-300 text-gray-500'
                             : 'bg-gradient-to-r from-purple-500 to-pink-500 text-white hover:shadow-lg'
                         }`}
@@ -409,31 +553,51 @@ const HealingLetterApp = () => {
                         {isGenerating ? (
                           <>
                             <div className="w-5 h-5 border-2 border-white border-t-transparent rounded-full animate-spin" />
-                            正在為你準備一封溫暖的信...
+                            覺察情緒...
                           </>
                         ) : (
                           <>
                             <Send size={20} />
-                            生成療癒信
+                            看見你的情緒
                           </>
                         )}
                       </button>
                     </div>
 
-                    {letters.length > 0 && letters.length < 4 && (
-                      <p className="text-center text-sm text-gray-500 mt-4">
-                        再 {4 - letters.length} 封信,就能看到你的心情趨勢分析 ✨
-                      </p>
+                    {/* 連續記錄進度 */}
+                    {letters.length > 0 && (
+                      <div className="mt-4 p-4 bg-purple-50 rounded-xl">
+                        <div className="flex items-center justify-between mb-2">
+                          <span className="text-sm text-gray-700">連續記錄</span>
+                          <span className="text-lg font-medium text-purple-600">{consecutiveDays} 天</span>
+                        </div>
+                        {!canGenerateTrend && (
+                          <p className="text-xs text-gray-500">
+                            再連續 {4 - consecutiveDays} 天,就能獲得趨勢分析 ✨
+                          </p>
+                        )}
+                      </div>
                     )}
                   </div>
                 )}
 
+                {/* 顯示當前信件 */}
                 {currentLetter && (
                   <div className="bg-white/90 backdrop-blur-sm rounded-3xl shadow-xl p-8 mb-6 animate-fade-in">
                     <div className="flex items-center justify-between mb-6">
-                      <div className="flex items-center gap-2 text-purple-600">
-                        <Mail size={24} />
-                        <span className="font-medium">你的療癒信</span>
+                      <div className="flex items-center gap-3">
+                        <img src={OTTER_IMAGE} alt="歐特" className="w-12 h-12 object-contain" />
+                        <div>
+                          <div className="flex items-center gap-2 text-purple-600">
+                            <Mail size={24} />
+                            <span className="font-medium">歐特的回應</span>
+                          </div>
+                          {currentLetter.emotion && (
+                            <div className="text-sm text-gray-500 mt-1">
+                              情緒: <span className="font-medium">{currentLetter.emotion}</span>
+                            </div>
+                          )}
+                        </div>
                       </div>
                       <span className="text-sm text-gray-500">
                         {new Date(currentLetter.date).toLocaleDateString('zh-TW')}
@@ -450,17 +614,18 @@ const HealingLetterApp = () => {
                       onClick={() => setCurrentLetter(null)}
                       className="mt-6 w-full py-3 rounded-2xl bg-purple-100 text-purple-700 hover:bg-purple-200 transition-all font-medium"
                     >
-                      寫下一封信
+                      繼續記錄心情
                     </button>
 
-                    {letters.length === 4 && trendAnalyses.length === 0 && (
+                    {/* 趨勢分析提示 */}
+                    {canGenerateTrend && trendAnalyses.length === 0 && (
                       <div className="mt-4 p-6 bg-gradient-to-r from-blue-50 to-purple-50 rounded-2xl border-2 border-blue-200 animate-fade-in">
                         <div className="flex items-center gap-2 text-blue-700 mb-3">
                           <Sparkles size={24} />
-                          <span className="font-medium text-lg">這是你的第 4 封信 ✨</span>
+                          <span className="font-medium text-lg">已連續記錄 {consecutiveDays} 天 ✨</span>
                         </div>
                         <p className="text-gray-700 mb-4">
-                          累積了 4 次的心情記錄,現在可以為你生成專屬的心情趨勢分析,
+                          太棒了!你已經連續 4 天記錄心情,現在可以為你生成專屬的心情趨勢分析,
                           看看這段時間的變化和成長 💙
                         </p>
                         <button
@@ -472,31 +637,12 @@ const HealingLetterApp = () => {
                         </button>
                       </div>
                     )}
-
-                    {letters.length > 4 && letters.length % 4 === 0 && trendAnalyses.length > 0 && (
-                      <div className="mt-4 p-6 bg-gradient-to-r from-purple-50 to-pink-50 rounded-2xl border-2 border-purple-200 animate-fade-in">
-                        <div className="flex items-center gap-2 text-purple-700 mb-3">
-                          <TrendingUp size={24} />
-                          <span className="font-medium text-lg">又累積了 4 封信 ✨</span>
-                        </div>
-                        <p className="text-gray-700 mb-4">
-                          你已經寫了 {letters.length} 封信了!
-                          想看看最新的心情趨勢變化嗎?
-                        </p>
-                        <button
-                          onClick={() => generateAndSaveTrendAnalysis(letters)}
-                          className="w-full py-3 rounded-2xl bg-gradient-to-r from-purple-500 to-pink-500 text-white font-medium hover:shadow-lg transition-all flex items-center justify-center gap-2"
-                        >
-                          <TrendingUp size={20} />
-                          更新我的趨勢分析
-                        </button>
-                      </div>
-                    )}
                   </div>
                 )}
               </>
             )}
 
+            {/* 歷史記錄頁面 */}
             {showHistory && (
               <div className="space-y-4">
                 <div className="flex items-center gap-3 mb-6">
@@ -506,11 +652,11 @@ const HealingLetterApp = () => {
                   >
                     <ArrowLeft size={24} />
                   </button>
-                  <h2 className="text-2xl font-medium text-gray-800">歷史信件</h2>
+                  <h2 className="text-2xl font-medium text-gray-800">歷史記錄</h2>
                 </div>
                 {letters.length === 0 ? (
                   <div className="text-center py-12 text-gray-500">
-                    還沒有任何信件喔
+                    還沒有任何記錄喔
                   </div>
                 ) : (
                   letters.slice().reverse().map((letter) => (
@@ -530,6 +676,11 @@ const HealingLetterApp = () => {
                             day: 'numeric'
                           })}
                         </span>
+                        {letter.emotion && (
+                          <span className="text-sm px-3 py-1 bg-purple-100 text-purple-700 rounded-full">
+                            {letter.emotion}
+                          </span>
+                        )}
                       </div>
                       <p className="text-gray-600 line-clamp-2">{letter.userInput}</p>
                     </div>
@@ -538,7 +689,8 @@ const HealingLetterApp = () => {
               </div>
             )}
 
-            {showTrend && trendAnalyses.length > 0 && (
+            {/* 情緒統計頁面 */}
+            {showStats && (
               <div className="animate-fade-in">
                 <div className="flex items-center gap-3 mb-6">
                   <button
@@ -548,6 +700,54 @@ const HealingLetterApp = () => {
                     <ArrowLeft size={24} />
                   </button>
                   <div className="flex items-center gap-2 text-blue-600">
+                    <BarChart3 size={24} />
+                    <span className="font-medium text-xl">本週情緒分布</span>
+                  </div>
+                </div>
+
+                <div className="bg-white/90 backdrop-blur-sm rounded-3xl shadow-xl p-8">
+                  <div className="space-y-4">
+                    {Object.entries(emotionStats)
+                      .sort((a, b) => b[1].percentage - a[1].percentage)
+                      .map(([emotion, data]) => (
+                        <div key={emotion} className="space-y-2">
+                          <div className="flex justify-between items-center">
+                            <span className="text-gray-700 font-medium">{emotion}</span>
+                            <span className="text-purple-600 font-medium">{data.percentage}%</span>
+                          </div>
+                          <div className="w-full bg-gray-200 rounded-full h-3">
+                            <div
+                              className="bg-gradient-to-r from-purple-500 to-pink-500 h-3 rounded-full transition-all duration-500"
+                              style={{ width: `${data.percentage}%` }}
+                            />
+                          </div>
+                          <div className="text-sm text-gray-500">
+                            共 {data.count} 次記錄
+                          </div>
+                        </div>
+                      ))}
+                  </div>
+
+                  {Object.keys(emotionStats).length === 0 && (
+                    <div className="text-center py-12 text-gray-500">
+                      最近 7 天還沒有記錄喔
+                    </div>
+                  )}
+                </div>
+              </div>
+            )}
+
+            {/* 趨勢分析頁面 */}
+            {showTrend && trendAnalyses.length > 0 && (
+              <div className="animate-fade-in">
+                <div className="flex items-center gap-3 mb-6">
+                  <button
+                    onClick={goHome}
+                    className="text-gray-500 hover:text-gray-700 transition-colors"
+                  >
+                    <ArrowLeft size={24} />
+                  </button>
+                  <div className="flex items-center gap-2 text-indigo-600">
                     <TrendingUp size={24} />
                     <span className="font-medium text-xl">心情趨勢分析</span>
                   </div>
@@ -559,7 +759,7 @@ const HealingLetterApp = () => {
                       <div className="flex items-center justify-between mb-4 pb-4 border-b border-gray-200">
                         <div className="flex items-center gap-2">
                           {index === 0 && (
-                            <span className="px-3 py-1 bg-blue-100 text-blue-700 text-sm rounded-full font-medium">
+                            <span className="px-3 py-1 bg-indigo-100 text-indigo-700 text-sm rounded-full font-medium">
                               最新
                             </span>
                           )}
@@ -573,7 +773,7 @@ const HealingLetterApp = () => {
                             month: 'long',
                             day: 'numeric'
                           })}</div>
-                          <div className="text-xs">基於 {analysis.letterCount} 封信件</div>
+                          <div className="text-xs">基於 {analysis.letterCount} 封記錄</div>
                         </div>
                       </div>
                       <div className="prose prose-lg max-w-none">
@@ -603,4 +803,4 @@ const HealingLetterApp = () => {
   );
 };
 
-export default HealingLetterApp;
+export default HealingNoteApp;

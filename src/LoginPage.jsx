@@ -1,7 +1,10 @@
 import React, { useState } from 'react';
-import { Heart, Mail, Lock, Sparkles } from 'lucide-react';
+import { Mail, Lock, Sparkles } from 'lucide-react';
 import { signInWithEmailAndPassword, createUserWithEmailAndPassword } from 'firebase/auth';
 import { auth } from './firebase';
+
+// 水獺圖片
+const OTTER_IMAGE = '/otter.png';
 
 const LoginPage = ({ onLoginSuccess }) => {
   const [isSignUp, setIsSignUp] = useState(false);
@@ -70,14 +73,14 @@ const LoginPage = ({ onLoginSuccess }) => {
       <div className="max-w-md w-full">
         {/* 標題區 */}
         <div className="text-center mb-8 animate-fade-in">
-          <div className="inline-block p-4 bg-white/60 rounded-full mb-4">
-            <Heart className="text-pink-500" fill="currentColor" size={48} />
+          <div className="inline-block mb-4">
+            <img src={OTTER_IMAGE} alt="歐特" className="w-24 h-auto mx-auto" />
           </div>
           <h1 className="text-3xl font-medium text-gray-800 mb-2">
-            給你的一封信
+            HealingNote 療心筆記
           </h1>
           <p className="text-gray-600">
-            在這裡,你可以安心說出心裡的話
+            每一個情緒都值得被理解
           </p>
         </div>
 
@@ -178,7 +181,7 @@ const LoginPage = ({ onLoginSuccess }) => {
           {/* 提示文字 */}
           <p className="text-center text-sm text-gray-500 mt-6">
             {isSignUp ? (
-              <>註冊後,你的所有信件都會安全地儲存在雲端</>
+              <>註冊後,你的所有記錄都會安全地儲存在雲端</>
             ) : (
               <>還沒有帳號嗎?點上方「註冊」建立新帳號</>
             )}
@@ -188,7 +191,7 @@ const LoginPage = ({ onLoginSuccess }) => {
         {/* 底部說明 */}
         <div className="text-center mt-6 text-sm text-gray-500">
           <p>你的隱私很重要</p>
-          <p>所有信件內容都僅限你本人查看</p>
+          <p>所有記錄內容都僅限你本人查看</p>
         </div>
       </div>
 

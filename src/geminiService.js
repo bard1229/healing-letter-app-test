@@ -77,7 +77,7 @@ ${userInput}
 - 在結尾前加上一句期待下次的話語(從上面5句隨機選)
 - 最後以「一直陪伴你的朋友 ✨」結尾
 - 不要使用 Markdown 格式(如 **、##等)
-- 直接輸出信件內容,不需要其他說明
+- 直接輸出信件內容,不需其他說明
 
 請直接生成信件內容:`;
 
@@ -100,8 +100,6 @@ ${userInput}
       throw new Error('API 模型不可用,請聯繫開發者');
     } else if (error.message?.includes('403') || error.message?.includes('permission')) {
       throw new Error('API 權限錯誤,請檢查 API Key 設定');
-    } else if (error.message?.includes('503') || error.message?.includes('overloaded')) {
-      throw new Error('伺服器目前忙碌中,已自動重試但仍無法完成。請稍後再試 (1-2 分鐘)');
     } else if (error.message?.includes('503') || error.message?.includes('overloaded')) {
       throw new Error('伺服器目前忙碌中,已自動重試但仍無法完成。請稍後再試 (1-2 分鐘)');
     } else {
@@ -187,51 +185,88 @@ ${lettersSummary}
   }
 };
 
-// 分析情緒標籤(用 AI 判斷)
+// 分析情緒標籤(用 AI 判斷) - 改為回傳繁體中文
 export const analyzeEmotion = async (text) => {
   try {
     const model = genAI.getGenerativeModel({ model: 'gemini-2.5-flash' });
 
-    const prompt = `請分析以下文字的主要情緒,只回答一個英文單字:
+    const prompt = `請分析以下文字的主要情緒,只回答一個繁體中文詞彙:
 
 文字: "${text}"
 
-可選的情緒標籤:
-- stressed (壓力/疲憊/忙碌)
-- sad (難過/傷心/委屈)
-- confused (迷茫/困惑/不知所措)
-- lonely (孤單/寂寞)
-- anxious (焦慮/擔心/害怕)
-- happy (開心/快樂)
-- neutral (中性/平靜)
+可選的情緒標籤(請從中選一個最符合的):
+- 壓力 (壓力/疲憊/忙碌/緊張)
+- 難過 (難過/傷心/委屈/失落/悲傷)
+- 迷茫 (迷茫/困惑/不知所措/徬徨)
+- 焦慮 (焦慮/擔心/害怕/不安/緊張)
+- 開心 (開心/快樂/高興/喜悅/愉快)
+- 平靜 (平靜/平穩/放鬆/安心/平和)
 
-請只回答一個最符合的英文單字,不要有其他文字:`;
+重要:
+- 只回答一個中文詞彙,不要有其他文字
+- 不要加標點符號
+- 不要解釋
+- 從上面列表中選一個最符合的
+
+請回答:`;
 
     const result = await generateContentWithRetry(model, prompt);
     const response = result.response;
-    const emotion = response.text().trim().toLowerCase();
+    const emotion = response.text().trim();
     
     // 驗證回應是否是有效的情緒標籤
-    const validEmotions = ['stressed', 'sad', 'confused', 'lonely', 'anxious', 'happy', 'neutral'];
+    const validEmotions = ['壓力', '難過', '迷茫', '焦慮', '開心', '平靜'];
     
     if (validEmotions.includes(emotion)) {
       console.log('情緒分析結果:', emotion);
       return emotion;
     } else {
-      console.warn('AI 返回了無效的情緒標籤:', emotion, '使用預設值 neutral');
-      return 'neutral';
+      console.warn('AI 返回了無效的情緒標籤:', emotion, '使用關鍵字判斷');
+      // 如果 AI 回傳無效內容,用關鍵字判斷
+      return analyzeEmotionByKeyword(text);
     }
 
   } catch (error) {
     console.error('情緒分析錯誤:', error);
-    // 如果 API 失敗,使用簡單的關鍵字判斷作為備用
-    const lowerText = text.toLowerCase();
-    if (lowerText.includes('壓力') || lowerText.includes('累') || lowerText.includes('疲憊')) return 'stressed';
-    if (lowerText.includes('難過') || lowerText.includes('傷心') || lowerText.includes('委屈')) return 'sad';
-    if (lowerText.includes('迷茫') || lowerText.includes('不知道') || lowerText.includes('困惑')) return 'confused';
-    if (lowerText.includes('孤單') || lowerText.includes('寂寞')) return 'lonely';
-    if (lowerText.includes('焦慮') || lowerText.includes('擔心') || lowerText.includes('害怕')) return 'anxious';
-    if (lowerText.includes('開心') || lowerText.includes('快樂') || lowerText.includes('高興')) return 'happy';
-    return 'neutral';
+    // 如果 API 失敗,使用關鍵字判斷作為備用
+    return analyzeEmotionByKeyword(text);
   }
+};
+
+// 備用:關鍵字情緒判斷(繁體中文)
+const analyzeEmotionByKeyword = (text) => {
+  const lowerText = text.toLowerCase();
+  
+  // 壓力相關
+  if (text.includes('壓力') || text.includes('累') || text.includes('疲憊') || 
+      text.includes('忙') || text.includes('趕') || text.includes('工作')) {
+    return '壓力';
+  }
+  
+  // 難過相關
+  if (text.includes('難過') || text.includes('傷心') || text.includes('委屈') || 
+      text.includes('失落') || text.includes('悲傷') || text.includes('哭')) {
+    return '難過';
+  }
+  
+  // 迷茫相關
+  if (text.includes('迷茫') || text.includes('不知道') || text.includes('困惑') || 
+      text.includes('徬徨') || text.includes('該怎麼')) {
+    return '迷茫';
+  }
+  
+  // 焦慮相關
+  if (text.includes('焦慮') || text.includes('擔心') || text.includes('害怕') || 
+      text.includes('不安') || text.includes('緊張') || text.includes('恐慌')) {
+    return '焦慮';
+  }
+  
+  // 開心相關
+  if (text.includes('開心') || text.includes('快樂') || text.includes('高興') || 
+      text.includes('喜悅') || text.includes('愉快') || text.includes('幸福')) {
+    return '開心';
+  }
+  
+  // 預設:平靜
+  return '平靜';
 };

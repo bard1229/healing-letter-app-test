@@ -513,7 +513,7 @@ const HealingNoteApp = () => {
       <div className="bg-white/80 backdrop-blur-sm border-b border-purple-100 sticky top-0 z-10">
         <div className="max-w-4xl mx-auto px-4 py-4 flex justify-between items-center">
           <div className="flex items-center gap-3">
-            <img src={OTTER_IMAGE} alt="歐特" className="w-22 h-22 object-contain" />
+            <img src={OTTER_IMAGE} alt="歐特" className="w-20 h-20 object-contain" />
             <div>
               <h1 className="text-xl font-medium text-gray-800">HealingNote 療心筆記</h1>
               <p className="text-xs text-gray-500 hidden sm:block">每一個情緒都值得被理解</p>
@@ -612,7 +612,7 @@ const HealingNoteApp = () => {
                     <div key={letter.id} className="bg-white/90 backdrop-blur-sm rounded-3xl shadow-xl p-8">
                       <div className="flex items-center justify-between mb-6">
                         <div className="flex items-center gap-3">
-                          <img src={OTTER_IMAGE} alt="歐特" className="w-22 h-22 object-contain" />
+                          <img src={OTTER_IMAGE} alt="歐特" className="w-20 h-20 object-contain" />
                           <div>
                             <div className="flex items-center gap-2 text-purple-600">
                               <Mail size={24} />

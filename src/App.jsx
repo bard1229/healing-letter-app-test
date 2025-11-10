@@ -1,12 +1,12 @@
 import React, { useState, useEffect } from 'react';
-import { Heart, Mic, Send, Clock, TrendingUp, Mail, Sparkles, Home, ArrowLeft, LogOut, Calendar, BarChart3 } from 'lucide-react';
+import { Heart, Mic, Send, Clock, TrendingUp, Mail, Sparkles, Home, ArrowLeft, LogOut, Calendar, BarChart3, ChevronLeft, ChevronRight } from 'lucide-react';
 import { onAuthStateChanged, signOut } from 'firebase/auth';
 import { collection, addDoc, query, where, getDocs, orderBy, Timestamp } from 'firebase/firestore';
 import { auth, db } from './firebase';
 import LoginPage from './LoginPage';
 import { generateHealingLetter, generateTrendAnalysis, analyzeEmotion } from './geminiService';
 
-// 水獺圖片 (你需要把圖片放到 public 資料夾)
+// 水獺圖片
 const OTTER_IMAGE = '/otter.png';
 
 const HealingNoteApp = () => {
@@ -20,13 +20,25 @@ const HealingNoteApp = () => {
   const [showHistory, setShowHistory] = useState(false);
   const [showTrend, setShowTrend] = useState(false);
   const [showStats, setShowStats] = useState(false);
+  const [showCalendar, setShowCalendar] = useState(false);
   const [trendAnalyses, setTrendAnalyses] = useState([]);
   const [loading, setLoading] = useState(false);
   const [dailyCount, setDailyCount] = useState(0);
   const [emotionStats, setEmotionStats] = useState({});
+  const [calendarDate, setCalendarDate] = useState(new Date());
 
   // 免費版每日限制
   const DAILY_LIMIT = 2;
+
+  // 情緒 emoji 對照
+  const emotionEmojis = {
+    '壓力': '😰',
+    '難過': '😢',
+    '迷茫': '🤔',
+    '焦慮': '😰',
+    '開心': '😊',
+    '平靜': '😌'
+  };
 
   useEffect(() => {
     const unsubscribe = onAuthStateChanged(auth, (currentUser) => {
@@ -126,7 +138,6 @@ const HealingNoteApp = () => {
       return;
     }
 
-    // 取所有記錄(不限7天,因為可能記錄不多)
     const recentLetters = allLetters.filter(l => l.emotion);
 
     if (recentLetters.length === 0) {
@@ -253,6 +264,7 @@ const HealingNoteApp = () => {
       setShowHistory(false);
       setShowTrend(false);
       setShowStats(false);
+      setShowCalendar(false);
       setTrendAnalyses([]);
       setDailyCount(0);
       console.log('登出成功');
@@ -266,6 +278,7 @@ const HealingNoteApp = () => {
     setShowHistory(false);
     setShowTrend(false);
     setShowStats(false);
+    setShowCalendar(false);
     setCurrentLetter(null);
   };
 
@@ -398,6 +411,85 @@ const HealingNoteApp = () => {
     }
   };
 
+  // 心情日曆相關函數
+  const getCalendarData = () => {
+    const year = calendarDate.getFullYear();
+    const month = calendarDate.getMonth();
+    
+    // 獲取當月第一天和最後一天
+    const firstDay = new Date(year, month, 1);
+    const lastDay = new Date(year, month + 1, 0);
+    
+    // 獲取當月第一天是星期幾 (0-6, 0是星期日)
+    const firstDayOfWeek = firstDay.getDay();
+    
+    // 獲取當月有幾天
+    const daysInMonth = lastDay.getDate();
+    
+    // 建立日曆陣列
+    const calendar = [];
+    let week = new Array(7).fill(null);
+    
+    // 填充第一週的空白
+    for (let i = 0; i < firstDayOfWeek; i++) {
+      week[i] = null;
+    }
+    
+    // 填充日期
+    for (let day = 1; day <= daysInMonth; day++) {
+      const dayOfWeek = (firstDayOfWeek + day - 1) % 7;
+      const date = new Date(year, month, day);
+      
+      // 找出這天的記錄
+      const dayLetters = letters.filter(letter => {
+        const letterDate = new Date(letter.date);
+        return letterDate.getFullYear() === year &&
+               letterDate.getMonth() === month &&
+               letterDate.getDate() === day;
+      });
+      
+      week[dayOfWeek] = {
+        day,
+        date,
+        letters: dayLetters,
+        emotion: dayLetters.length > 0 ? dayLetters[dayLetters.length - 1].emotion : null
+      };
+      
+      if (dayOfWeek === 6) {
+        calendar.push(week);
+        week = new Array(7).fill(null);
+      }
+    }
+    
+    // 如果最後一週不完整,也加入
+    if (week.some(d => d !== null)) {
+      calendar.push(week);
+    }
+    
+    return calendar;
+  };
+
+  const changeMonth = (offset) => {
+    const newDate = new Date(calendarDate);
+    newDate.setMonth(newDate.getMonth() + offset);
+    setCalendarDate(newDate);
+  };
+
+  const handleDayClick = (dayData) => {
+    if (dayData.letters.length > 0) {
+      // 如果有多封,顯示最後一封
+      setCurrentLetter(dayData.letters[dayData.letters.length - 1]);
+      setShowCalendar(false);
+    }
+  };
+
+  const isToday = (date) => {
+    const today = new Date();
+    return date.getFullYear() === today.getFullYear() &&
+           date.getMonth() === today.getMonth() &&
+           date.getDate() === today.getDate();
+  };
+
   if (authLoading) {
     return (
       <div className="min-h-screen bg-gradient-to-br from-pink-50 via-purple-50 to-blue-50 flex items-center justify-center">
@@ -415,6 +507,7 @@ const HealingNoteApp = () => {
 
   const consecutiveDays = checkConsecutiveDays(letters);
   const canGenerateTrend = consecutiveDays >= 4;
+  const calendarData = getCalendarData();
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-pink-50 via-purple-50 to-blue-50">
@@ -422,7 +515,7 @@ const HealingNoteApp = () => {
       <div className="bg-white/80 backdrop-blur-sm border-b border-purple-100 sticky top-0 z-10">
         <div className="max-w-4xl mx-auto px-4 py-4 flex justify-between items-center">
           <div className="flex items-center gap-3">
-            <img src={OTTER_IMAGE} alt="歐特" className="w-10 h-10 object-contain" />
+            <img src={OTTER_IMAGE} alt="歐特" className="w-20 h-20 object-contain" />
             <div>
               <h1 className="text-xl font-medium text-gray-800">HealingNote 療心筆記</h1>
               <p className="text-xs text-gray-500 hidden sm:block">每一個情緒都值得被理解</p>
@@ -432,7 +525,7 @@ const HealingNoteApp = () => {
             <span className="text-sm text-gray-600 hidden sm:inline">
               {user.email}
             </span>
-            {(showHistory || showTrend || showStats) && (
+            {(showHistory || showTrend || showStats || showCalendar) && (
               <button
                 onClick={goHome}
                 className="px-4 py-2 rounded-full bg-pink-100 text-pink-700 hover:bg-pink-200 transition-all flex items-center gap-2"
@@ -442,15 +535,24 @@ const HealingNoteApp = () => {
               </button>
             )}
             <button
-              onClick={() => { setShowHistory(!showHistory); setShowTrend(false); setShowStats(false); setCurrentLetter(null); }}
+              onClick={() => { setShowHistory(!showHistory); setShowTrend(false); setShowStats(false); setShowCalendar(false); setCurrentLetter(null); }}
               className="px-4 py-2 rounded-full bg-purple-100 text-purple-700 hover:bg-purple-200 transition-all flex items-center gap-2"
             >
               <Clock size={16} />
               <span className="hidden sm:inline">歷史</span> ({letters.length})
             </button>
+            {letters.length > 0 && (
+              <button
+                onClick={() => { setShowCalendar(!showCalendar); setShowHistory(false); setShowTrend(false); setShowStats(false); setCurrentLetter(null); }}
+                className="px-4 py-2 rounded-full bg-green-100 text-green-700 hover:bg-green-200 transition-all flex items-center gap-2"
+              >
+                <Calendar size={16} />
+                <span className="hidden sm:inline">日曆</span>
+              </button>
+            )}
             {Object.keys(emotionStats).length > 0 && (
               <button
-                onClick={() => { setShowStats(!showStats); setShowHistory(false); setShowTrend(false); setCurrentLetter(null); }}
+                onClick={() => { setShowStats(!showStats); setShowHistory(false); setShowTrend(false); setShowCalendar(false); setCurrentLetter(null); }}
                 className="px-4 py-2 rounded-full bg-blue-100 text-blue-700 hover:bg-blue-200 transition-all flex items-center gap-2"
               >
                 <BarChart3 size={16} />
@@ -459,7 +561,7 @@ const HealingNoteApp = () => {
             )}
             {trendAnalyses.length > 0 && (
               <button
-                onClick={() => { setShowTrend(!showTrend); setShowHistory(false); setShowStats(false); setCurrentLetter(null); }}
+                onClick={() => { setShowTrend(!showTrend); setShowHistory(false); setShowStats(false); setShowCalendar(false); setCurrentLetter(null); }}
                 className="px-4 py-2 rounded-full bg-indigo-100 text-indigo-700 hover:bg-indigo-200 transition-all flex items-center gap-2"
               >
                 <TrendingUp size={16} />
@@ -485,8 +587,108 @@ const HealingNoteApp = () => {
           </div>
         ) : (
           <>
-            {/* 主頁面 */}
-            {!showHistory && !showTrend && !showStats && (
+            {/* 心情日曆頁面 */}
+            {showCalendar && (
+              <div className="animate-fade-in">
+                <div className="flex items-center gap-3 mb-6">
+                  <button
+                    onClick={goHome}
+                    className="text-gray-500 hover:text-gray-700 transition-colors"
+                  >
+                    <ArrowLeft size={24} />
+                  </button>
+                  <div className="flex items-center gap-2 text-green-600">
+                    <Calendar size={24} />
+                    <span className="font-medium text-xl">心情日曆</span>
+                  </div>
+                </div>
+
+                <div className="bg-white/90 backdrop-blur-sm rounded-3xl shadow-xl p-6 md:p-8">
+                  {/* 月份選擇器 */}
+                  <div className="flex items-center justify-between mb-6">
+                    <button
+                      onClick={() => changeMonth(-1)}
+                      className="p-2 rounded-full hover:bg-gray-100 transition-colors"
+                    >
+                      <ChevronLeft size={24} className="text-gray-600" />
+                    </button>
+                    
+                    <h3 className="text-xl font-medium text-gray-800">
+                      {calendarDate.getFullYear()} 年 {calendarDate.getMonth() + 1} 月
+                    </h3>
+                    
+                    <button
+                      onClick={() => changeMonth(1)}
+                      className="p-2 rounded-full hover:bg-gray-100 transition-colors"
+                    >
+                      <ChevronRight size={24} className="text-gray-600" />
+                    </button>
+                  </div>
+
+                  {/* 星期標題 */}
+                  <div className="grid grid-cols-7 gap-2 mb-4">
+                    {['日', '一', '二', '三', '四', '五', '六'].map(day => (
+                      <div key={day} className="text-center font-medium text-gray-600 text-sm">
+                        {day}
+                      </div>
+                    ))}
+                  </div>
+
+                  {/* 日曆格子 */}
+                  <div className="space-y-2">
+                    {calendarData.map((week, weekIndex) => (
+                      <div key={weekIndex} className="grid grid-cols-7 gap-2">
+                        {week.map((dayData, dayIndex) => (
+                          <div
+                            key={dayIndex}
+                            onClick={() => dayData && dayData.letters.length > 0 && handleDayClick(dayData)}
+                            className={`
+                              aspect-square flex flex-col items-center justify-center rounded-xl
+                              ${dayData ? 'bg-gray-50' : ''}
+                              ${dayData && dayData.letters.length > 0 ? 'cursor-pointer hover:bg-purple-50 hover:shadow-md transition-all' : ''}
+                              ${dayData && isToday(dayData.date) ? 'ring-2 ring-purple-500' : ''}
+                            `}
+                          >
+                            {dayData && (
+                              <>
+                                <span className="text-sm text-gray-700 mb-1">
+                                  {dayData.day}
+                                </span>
+                                {dayData.emotion && (
+                                  <span className="text-2xl">
+                                    {emotionEmojis[dayData.emotion] || '💭'}
+                                  </span>
+                                )}
+                                {dayData.letters.length > 1 && (
+                                  <span className="text-xs text-gray-400 mt-1">
+                                    {dayData.letters.length}篇
+                                  </span>
+                                )}
+                              </>
+                            )}
+                          </div>
+                        ))}
+                      </div>
+                    ))}
+                  </div>
+
+                  {/* 說明 */}
+                  <div className="mt-6 p-4 bg-purple-50 rounded-xl">
+                    <p className="text-sm text-gray-600 text-center">
+                      💡 點擊有 emoji 的日期可以查看當天的記錄
+                    </p>
+                    {letters.length === 0 && (
+                      <p className="text-sm text-gray-500 text-center mt-2">
+                        開始記錄心情,日曆就會顯示你的情緒變化喔!
+                      </p>
+                    )}
+                  </div>
+                </div>
+              </div>
+            )}
+
+            {/* 主頁面 - 原有的所有內容保持不變 */}
+            {!showHistory && !showTrend && !showStats && !showCalendar && (
               <>
                 {/* 首次使用歡迎 */}
                 {!currentLetter && letters.length === 0 && (
@@ -647,7 +849,7 @@ const HealingNoteApp = () => {
               </>
             )}
 
-            {/* 歷史記錄頁面 */}
+            {/* 歷史記錄頁面 - 保持不變 */}
             {showHistory && (
               <div className="space-y-4">
                 <div className="flex items-center gap-3 mb-6">
@@ -683,7 +885,7 @@ const HealingNoteApp = () => {
                         </span>
                         {letter.emotion && (
                           <span className="text-sm px-3 py-1 bg-purple-100 text-purple-700 rounded-full">
-                            {letter.emotion}
+                            {emotionEmojis[letter.emotion] || '💭'} {letter.emotion}
                           </span>
                         )}
                       </div>
@@ -694,7 +896,7 @@ const HealingNoteApp = () => {
               </div>
             )}
 
-            {/* 情緒統計頁面 */}
+            {/* 情緒統計頁面 - 保持不變 */}
             {showStats && (
               <div className="animate-fade-in">
                 <div className="flex items-center gap-3 mb-6">
@@ -706,7 +908,7 @@ const HealingNoteApp = () => {
                   </button>
                   <div className="flex items-center gap-2 text-blue-600">
                     <BarChart3 size={24} />
-                    <span className="font-medium text-xl">本週情緒分布</span>
+                    <span className="font-medium text-xl">情緒統計</span>
                   </div>
                 </div>
 
@@ -735,14 +937,14 @@ const HealingNoteApp = () => {
 
                   {Object.keys(emotionStats).length === 0 && (
                     <div className="text-center py-12 text-gray-500">
-                      最近 7 天還沒有記錄喔
+                      還沒有足夠的記錄喔,開始寫下你的心情吧!
                     </div>
                   )}
                 </div>
               </div>
             )}
 
-            {/* 趨勢分析頁面 */}
+            {/* 趨勢分析頁面 - 保持不變 */}
             {showTrend && trendAnalyses.length > 0 && (
               <div className="animate-fade-in">
                 <div className="flex items-center gap-3 mb-6">

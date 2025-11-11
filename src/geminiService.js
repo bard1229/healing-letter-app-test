@@ -10,7 +10,7 @@ const genAI = new GoogleGenerativeAI(API_KEY);
 
 export const generateHealingLetter = async (userInput) => {
   try {
-    const model = genAI.getGenerativeModel({ model: 'gemini-pro' });
+    const model = genAI.getGenerativeModel({ model: 'gemini-2.5-flash' });
     
     const prompt = `你是一位溫暖、同理心強的心理輔導者,名叫「歐特」(一隻可愛的水獺)。
 
@@ -56,7 +56,7 @@ ${userInput}
 
 export const generateTrendAnalysis = async (letters) => {
   try {
-    const model = genAI.getGenerativeModel({ model: 'gemini-pro' });
+    const model = genAI.getGenerativeModel({ model: 'gemini-2.5-flash' });
     
     const letterSummaries = letters.slice(-10).map((letter, index) => {
       return `[記錄 ${index + 1}] ${new Date(letter.date).toLocaleDateString('zh-TW')}
@@ -107,7 +107,7 @@ ${letterSummaries}
 
 export const analyzeEmotion = async (userInput) => {
   try {
-    const model = genAI.getGenerativeModel({ model: 'gemini-pro' });
+    const model = genAI.getGenerativeModel({ model: 'gemini-2.5-flash' });
     
     const prompt = `分析以下文字的主要情緒,只回答一個中文詞彙:
 

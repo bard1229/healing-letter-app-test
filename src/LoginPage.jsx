@@ -81,29 +81,57 @@ const LoginPage = ({ onLoginSuccess }) => {
       return;
     }
 
+    console.log('🔄 開始發送重設信件到:', email);
+    console.log('🔄 當前時間:', new Date().toLocaleString('zh-TW'));
+
     setLoading(true);
 
     try {
       await sendPasswordResetEmail(auth, email);
-      setSuccessMessage('✅ 密碼重設信件已發送!請檢查你的 Email 收件匣 📧');
+      console.log('✅ Firebase 回應成功!信件已發送!');
+      console.log('✅ 請檢查以下位置:');
+      console.log('   1. 收件匣');
+      console.log('   2. 垃圾郵件');
+      console.log('   3. 促銷內容');
+      
+      setSuccessMessage(`✅ 密碼重設信件已發送!
+
+請檢查 Email 收件匣 📧
+目標信箱: ${email}
+
+💡 提醒:
+• 檢查垃圾郵件資料夾
+• 可能需要等待 1-2 分鐘
+• 信件來自 noreply@...firebaseapp.com`);
+      
+      // 延長顯示時間,讓使用者看清楚
       setTimeout(() => {
         setShowForgotPassword(false);
         setSuccessMessage('');
-      }, 3000);
+      }, 8000);
     } catch (error) {
-      console.error('發送重設信件失敗:', error);
+      console.error('❌ 發送重設信件失敗!');
+      console.error('❌ 錯誤代碼:', error.code);
+      console.error('❌ 錯誤訊息:', error.message);
+      console.error('❌ 完整錯誤:', error);
       
       let errorMessage = '發送失敗,請稍後再試 😢';
       
       switch (error.code) {
         case 'auth/user-not-found':
-          errorMessage = '找不到此 Email 的帳號 ❌';
+          errorMessage = '找不到此 Email 的帳號 ❌\n\n請確認:\n• Email 拼寫正確\n• 已經註冊過此帳號';
           break;
         case 'auth/invalid-email':
-          errorMessage = 'Email 格式不正確 ⚠️';
+          errorMessage = 'Email 格式不正確 ⚠️\n\n範例: your@email.com';
+          break;
+        case 'auth/missing-email':
+          errorMessage = '請輸入 Email ⚠️';
+          break;
+        case 'auth/too-many-requests':
+          errorMessage = '⚠️ 發送次數過多\n\n請稍後再試 (約 1 小時)';
           break;
         default:
-          errorMessage = error.message;
+          errorMessage = `發送失敗 😢\n\n錯誤: ${error.message}\n\n請截圖此訊息聯絡客服`;
       }
       
       setError(errorMessage);

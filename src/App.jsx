@@ -796,7 +796,7 @@ const HealingNoteApp = () => {
             {/* 主頁面 */}
             {!showHistory && !showTrend && !showStats && !showCalendar && !showDayDetail && (
               <>
-                {/* 首次使用歡迎 - 修正條件 */}
+                {/* 新用戶:完整簡介 */}
                 {!currentLetter && letters.length === 0 && !isLimitReached && (
                   <div className="text-center mb-8 animate-fade-in">
                     <div className="inline-block mb-6">
@@ -815,6 +815,40 @@ const HealingNoteApp = () => {
                         <p>1️⃣ 專注情緒健康,溫暖細膩的覺察 ✨</p>
                         <p>2️⃣ 保存記錄,追蹤心情變化 📊</p>
                         <p>3️⃣ 智能趨勢分析,陪你看見自己的成長 🌱</p>
+                      </div>
+                    </div>
+                  </div>
+                )}
+
+                {/* 老用戶:簡短歡迎 */}
+                {!currentLetter && letters.length > 0 && !isLimitReached && (
+                  <div className="text-center mb-8 animate-fade-in">
+                    <div className="inline-block mb-4">
+                      <img src={OTTER_IMAGE} alt="歐特" className="w-20 h-auto mx-auto" />
+                    </div>
+                    <h2 className="text-2xl font-medium text-gray-800 mb-2">
+                      歡迎回來! 🦦✨
+                    </h2>
+                    <p className="text-gray-600 mb-4">
+                      今天想記錄什麼心情呢? 💭
+                    </p>
+                    <div className="max-w-md mx-auto bg-white/60 rounded-2xl p-4">
+                      <div className="grid grid-cols-3 gap-3 text-sm">
+                        <div className="text-center">
+                          <div className="text-2xl mb-1">📊</div>
+                          <div className="text-gray-600">已記錄</div>
+                          <div className="font-medium text-purple-600">{totalDays} 天</div>
+                        </div>
+                        <div className="text-center">
+                          <div className="text-2xl mb-1">🔥</div>
+                          <div className="text-gray-600">連續</div>
+                          <div className="font-medium text-purple-600">{consecutiveDays} 天</div>
+                        </div>
+                        <div className="text-center">
+                          <div className="text-2xl mb-1">💌</div>
+                          <div className="text-gray-600">總計</div>
+                          <div className="font-medium text-purple-600">{letters.length} 封</div>
+                        </div>
                       </div>
                     </div>
                   </div>

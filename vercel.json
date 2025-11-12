@@ -1,0 +1,8 @@
+{
+  "rewrites": [
+    {
+      "source": "/auth/line/callback",
+      "destination": "/index.html"
+    }
+  ]
+}

@@ -1,13 +1,9 @@
 import React, { useEffect, useState } from 'react';
-import { useNavigate, useSearchParams } from 'react-router-dom';
 import { getLineAccessToken, getLineProfile, verifyState } from './lineAuth';
-import { signInWithCustomToken } from 'firebase/auth';
 import { auth, db } from './firebase';
 import { doc, setDoc, getDoc } from 'firebase/firestore';
 
 const LineCallback = () => {
-  const [searchParams] = useSearchParams();
-  const navigate = useNavigate();
   const [error, setError] = useState('');
   const [loading, setLoading] = useState(true);
 
@@ -18,10 +14,11 @@ const LineCallback = () => {
   const handleCallback = async () => {
     try {
       // 取得 URL 參數
-      const code = searchParams.get('code');
-      const state = searchParams.get('state');
-      const errorParam = searchParams.get('error');
-      const errorDescription = searchParams.get('error_description');
+      const urlParams = new URLSearchParams(window.location.search);
+      const code = urlParams.get('code');
+      const state = urlParams.get('state');
+      const errorParam = urlParams.get('error');
+      const errorDescription = urlParams.get('error_description');
 
       // 檢查是否有錯誤
       if (errorParam) {
@@ -52,8 +49,8 @@ const LineCallback = () => {
       await createOrUpdateUser(profile, tokenData.access_token);
       console.log('✅ 使用者資料已同步到 Firebase');
 
-      // 4. 導向首頁
-      navigate('/', { replace: true });
+      // 4. 導向首頁 (使用原生方式,不需要 react-router)
+      window.location.href = '/';
     } catch (error) {
       console.error('❌ LINE 登入處理失敗:', error);
       setError(error.message || 'LINE 登入處理失敗');
@@ -90,9 +87,10 @@ const LineCallback = () => {
         });
       }
 
-      // 使用 LINE User ID 作為自訂 Token 登入 Firebase Auth
-      // 注意:這需要後端 API 來產生 Custom Token
-      // 這裡先用簡單的方式,直接儲存到 Firestore
+      // 儲存登入狀態到 localStorage
+      localStorage.setItem('lineUserId', lineProfile.userId);
+      localStorage.setItem('lineUserName', lineProfile.displayName);
+      localStorage.setItem('lineUserPicture', lineProfile.pictureUrl || '');
       
     } catch (error) {
       console.error('建立/更新使用者失敗:', error);
@@ -124,7 +122,7 @@ const LineCallback = () => {
           <h2 className="text-xl font-medium text-gray-800 mb-2">登入失敗 😢</h2>
           <p className="text-gray-600 mb-6">{error}</p>
           <button
-            onClick={() => navigate('/login', { replace: true })}
+            onClick={() => window.location.href = '/'}
             className="w-full py-3 rounded-2xl bg-gradient-to-r from-purple-500 to-pink-500 text-white font-medium hover:shadow-lg transition-all"
           >
             返回登入頁面

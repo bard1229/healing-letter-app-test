@@ -596,7 +596,7 @@ const HealingNoteApp = () => {
               <div className="bg-white/90 backdrop-blur-sm rounded-3xl shadow-xl p-8 mb-6">
                 <div className="flex items-center gap-2 mb-4">
                   <Sparkles className="text-purple-600" size={24} />
-                  <h2 className="text-xl font-medium text-gray-800">今天想說什麼呢? 💭</h2>
+                  <h2 className="text-xl font-medium text-gray-800">今天想說什麼呢? 😊</h2>
                 </div>
 
                 {dailyCount >= DAILY_LIMIT && (

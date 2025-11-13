@@ -42,19 +42,43 @@ const HealingNoteApp = () => {
     '平靜': '😌'
   };
 
+  // 🔧 修改後的登入檢查 - 同時支援 Firebase Auth 和 LINE 登入
   useEffect(() => {
     const unsubscribe = onAuthStateChanged(auth, (currentUser) => {
-      setUser(currentUser);
-      setAuthLoading(false);
-      
       if (currentUser) {
-        console.log('使用者已登入:', currentUser.email);
+        // Firebase Auth 使用者 (Email 登入)
+        console.log('✅ Firebase Auth 使用者已登入:', currentUser.email);
+        setUser(currentUser);
+        setAuthLoading(false);
         loadUserData(currentUser.uid);
       } else {
-        console.log('使用者未登入');
-        setLetters([]);
-        setTrendAnalyses([]);
-        setDailyCount(0);
+        // 檢查是否為 LINE 登入
+        const lineUserId = localStorage.getItem('lineUserId');
+        const lineUserName = localStorage.getItem('lineUserName');
+        const lineUserPicture = localStorage.getItem('lineUserPicture');
+        
+        if (lineUserId) {
+          // LINE 使用者
+          console.log('✅ LINE 使用者已登入:', lineUserName);
+          const lineUser = {
+            uid: lineUserId,
+            displayName: lineUserName || '使用者',
+            photoURL: lineUserPicture || '',
+            email: null,
+            isLineUser: true  // 標記為 LINE 使用者
+          };
+          setUser(lineUser);
+          setAuthLoading(false);
+          loadUserData(lineUserId);
+        } else {
+          // 沒有登入
+          console.log('❌ 使用者未登入');
+          setUser(null);
+          setAuthLoading(false);
+          setLetters([]);
+          setTrendAnalyses([]);
+          setDailyCount(0);
+        }
       }
     });
 
@@ -209,323 +233,266 @@ const HealingNoteApp = () => {
         const data = doc.data();
         analyses.push({
           id: doc.id,
-          date: data.createdAt?.toDate().toISOString() || new Date().toISOString(),
-          content: data.content,
-          letterCount: data.letterCount || 4
+          ...data,
+          date: data.createdAt?.toDate().toISOString() || new Date().toISOString()
         });
       });
       
       setTrendAnalyses(analyses);
-      console.log('載入了', analyses.length, '份趨勢分析');
     } catch (error) {
       console.error('載入趨勢分析失敗:', error);
     }
   };
 
-  const saveLetterToFirestore = async (letter) => {
-    if (!user) return;
-    
-    try {
-      const lettersRef = collection(db, 'letters');
-      const docRef = await addDoc(lettersRef, {
-        userId: user.uid,
-        userEmail: user.email,
-        userInput: letter.userInput,
-        content: letter.content,
-        emotion: letter.emotion,
-        createdAt: Timestamp.now()
-      });
-      
-      console.log('信件已儲存,ID:', docRef.id);
-      return docRef.id;
-    } catch (error) {
-      console.error('儲存信件失敗:', error);
-      alert('儲存信件時發生錯誤');
-    }
-  };
-
-  const saveTrendAnalysisToFirestore = async (analysis) => {
-    if (!user) return;
-    
-    try {
-      const trendRef = collection(db, 'trendAnalysis');
-      const docRef = await addDoc(trendRef, {
-        userId: user.uid,
-        userEmail: user.email,
-        content: analysis.content,
-        letterCount: letters.length,
-        createdAt: Timestamp.now()
-      });
-      
-      console.log('趨勢分析已儲存,ID:', docRef.id);
-      return docRef.id;
-    } catch (error) {
-      console.error('儲存趨勢分析失敗:', error);
-    }
-  };
-
+  // 🔧 修改後的登出函數 - 同時處理 Firebase 和 LINE 登出
   const handleLogout = async () => {
     try {
+      // Firebase Auth 登出
       await signOut(auth);
+      
+      // 清除 LINE 登入資料
+      localStorage.removeItem('lineUserId');
+      localStorage.removeItem('lineUserName');
+      localStorage.removeItem('lineUserPicture');
+      localStorage.removeItem('line_login_state');
+      localStorage.removeItem('line_login_state_time');
+      
+      console.log('✅ 登出成功');
+      
+      // 重置狀態
+      setUser(null);
       setLetters([]);
+      setTrendAnalyses([]);
       setCurrentLetter(null);
       setShowHistory(false);
       setShowTrend(false);
       setShowStats(false);
       setShowCalendar(false);
-      setShowDayDetail(false);
-      setSelectedDayLetters([]);
-      setTrendAnalyses([]);
-      setDailyCount(0);
-      console.log('登出成功');
     } catch (error) {
       console.error('登出失敗:', error);
       alert('登出時發生錯誤');
     }
   };
 
-  const goHome = () => {
-    setShowHistory(false);
-    setShowTrend(false);
-    setShowStats(false);
-    setShowCalendar(false);
-    setShowDayDetail(false);
-    setCurrentLetter(null);
-    setSelectedDayLetters([]);
-  };
-
-  const startListening = () => {
-    if (!('webkitSpeechRecognition' in window) && !('SpeechRecognition' in window)) {
-      alert('抱歉,你的瀏覽器不支援語音輸入 😢\n\n請使用以下瀏覽器:\n• Google Chrome\n• Microsoft Edge\n• Safari (iOS)');
-      return;
-    }
-
-    try {
-      const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
-      const recognition = new SpeechRecognition();
-      recognition.lang = 'zh-TW';
-      recognition.continuous = false;
-      recognition.interimResults = false;
-
-      recognition.onstart = () => {
-        setIsListening(true);
-      };
-
-      recognition.onresult = (event) => {
-        const transcript = event.results[0][0].transcript;
-        setInput(prev => prev + ' ' + transcript);
-      };
-
-      recognition.onerror = (event) => {
-        setIsListening(false);
-        let errorMsg = '語音輸入發生錯誤 😢\n\n';
-        if (event.error === 'not-allowed') {
-          errorMsg += '請允許瀏覽器使用麥克風權限';
-        } else if (event.error === 'no-speech') {
-          errorMsg += '沒有偵測到聲音,請再試一次';
-        }
-        alert(errorMsg);
-      };
-
-      recognition.onend = () => {
-        setIsListening(false);
-      };
-
-      recognition.start();
-    } catch (error) {
-      alert('語音輸入啟動失敗');
-      setIsListening(false);
-    }
-  };
-
-  const generateLetter = async () => {
-    // 檢查每日限制
-    if (dailyCount >= DAILY_LIMIT) {
-      alert(`📔 今日記錄已達上限\n\n免費版每天限 ${DAILY_LIMIT} 次記錄\n明天再來記錄新的心情吧! 💙`);
-      return;
-    }
-
+  const handleSubmit = async (e) => {
+    e.preventDefault();
+    
     if (!input.trim()) {
-      alert('請先告訴我你的心情或煩惱喔 💙');
+      alert('請輸入你的心情 💭');
+      return;
+    }
+
+    if (dailyCount >= DAILY_LIMIT) {
+      alert(`免費版每天限制 ${DAILY_LIMIT} 次喔 💙\n\n明天再來記錄吧!`);
       return;
     }
 
     setIsGenerating(true);
-    
+
     try {
-      console.log('開始呼叫 Gemini API...');
-      
-      const content = await generateHealingLetter(input);
-      console.log('Gemini 回應成功');
-      
       const emotion = await analyzeEmotion(input);
-      console.log('情緒分析:', emotion);
+      console.log('偵測到的情緒:', emotion);
+
+      const letter = await generateHealingLetter(input, emotion);
       
       const newLetter = {
         userInput: input,
-        content: content,
-        emotion: emotion
+        letterContent: letter,
+        emotion: emotion,
+        date: new Date().toISOString()
       };
-
-      const docId = await saveLetterToFirestore(newLetter);
       
-      if (docId) {
-        const letterWithId = {
-          id: docId,
-          date: new Date().toISOString(),
-          ...newLetter
-        };
-        
-        const newLetters = [...letters, letterWithId];
-        setLetters(newLetters);
-        setCurrentLetter(letterWithId);
-        setInput('');
-        setDailyCount(dailyCount + 1);
-        
-        // 重新計算情緒統計
-        calculateEmotionStats(newLetters);
-      }
+      setCurrentLetter(newLetter);
+      
+      const docRef = await addDoc(collection(db, 'letters'), {
+        userId: user.uid,
+        userInput: input,
+        letterContent: letter,
+        emotion: emotion,
+        createdAt: Timestamp.now()
+      });
+
+      newLetter.id = docRef.id;
+      setLetters([...letters, newLetter]);
+      
+      setDailyCount(dailyCount + 1);
+
+      calculateEmotionStats([...letters, newLetter]);
+      
+      setInput('');
+      
     } catch (error) {
       console.error('生成信件失敗:', error);
-      alert(error.message || '生成信件時發生錯誤,請稍後再試');
+      alert('抱歉,生成信件時發生錯誤 😢\n\n請稍後再試,或檢查網路連線!');
     } finally {
       setIsGenerating(false);
     }
   };
 
-  const generateAndSaveTrendAnalysis = async (allLetters) => {
+  const handleVoiceInput = () => {
+    if (!('webkitSpeechRecognition' in window)) {
+      alert('抱歉,你的瀏覽器不支援語音輸入 😢');
+      return;
+    }
+
+    const recognition = new webkitSpeechRecognition();
+    recognition.lang = 'zh-TW';
+    recognition.continuous = false;
+    recognition.interimResults = false;
+
+    recognition.onstart = () => {
+      setIsListening(true);
+      console.log('開始聽取語音...');
+    };
+
+    recognition.onresult = (event) => {
+      const transcript = event.results[0][0].transcript;
+      setInput(transcript);
+      console.log('語音轉文字:', transcript);
+    };
+
+    recognition.onerror = (event) => {
+      console.error('語音辨識錯誤:', event.error);
+      alert('語音辨識失敗,請再試一次 🎤');
+      setIsListening(false);
+    };
+
+    recognition.onend = () => {
+      setIsListening(false);
+      console.log('語音輸入結束');
+    };
+
+    recognition.start();
+  };
+
+  const goHome = () => {
+    setCurrentLetter(null);
+    setShowHistory(false);
+    setShowTrend(false);
+    setShowStats(false);
+    setShowCalendar(false);
+    setShowDayDetail(false);
+  };
+
+  const generateTrend = async () => {
+    if (letters.length < 3) {
+      alert('至少需要 3 封記錄才能生成趨勢分析喔 📊');
+      return;
+    }
+
+    setIsGenerating(true);
     try {
-      console.log('開始生成趨勢分析...');
+      const recentLetters = letters.slice(-10);
+      const analysis = await generateTrendAnalysis(recentLetters);
       
-      const content = await generateTrendAnalysis(allLetters);
-      console.log('趨勢分析生成成功');
-      
-      const analysis = {
-        date: new Date().toISOString(),
-        content: content
+      const docRef = await addDoc(collection(db, 'trendAnalysis'), {
+        userId: user.uid,
+        content: analysis,
+        letterCount: recentLetters.length,
+        createdAt: Timestamp.now()
+      });
+
+      const newAnalysis = {
+        id: docRef.id,
+        content: analysis,
+        letterCount: recentLetters.length,
+        date: new Date().toISOString()
       };
+
+      setTrendAnalyses([newAnalysis, ...trendAnalyses]);
+      setShowTrend(true);
       
-      const docId = await saveTrendAnalysisToFirestore(analysis);
-      
-      if (docId) {
-        const newAnalysis = {
-          id: docId,
-          letterCount: allLetters.length,
-          ...analysis
-        };
-        
-        setTrendAnalyses([newAnalysis, ...trendAnalyses]);
-        setShowTrend(true);
-        setCurrentLetter(null);
-      }
     } catch (error) {
       console.error('生成趨勢分析失敗:', error);
-      alert(error.message || '生成趨勢分析時發生錯誤');
+      alert('抱歉,生成趨勢分析時發生錯誤 😢');
+    } finally {
+      setIsGenerating(false);
     }
   };
 
-  // 社群分享功能
   const shareToSocial = (platform, content) => {
-    const text = `我在 HealingNote 記錄了我的心情變化 ✨\n\n${content.substring(0, 100)}...\n\n#情緒日記 #心理健康 #HealingNote`;
-    const url = window.location.href;
-    
-    let shareUrl = '';
+    const shareText = `我在 HealingNote 記錄了我的心情成長 💙\n\n${content.substring(0, 100)}...\n\n一起來記錄你的心情吧! ✨`;
     
     switch(platform) {
       case 'facebook':
-        shareUrl = `https://www.facebook.com/sharer/sharer.php?u=${encodeURIComponent(url)}&quote=${encodeURIComponent(text)}`;
+        window.open(`https://www.facebook.com/sharer/sharer.php?u=${encodeURIComponent(window.location.href)}&quote=${encodeURIComponent(shareText)}`, '_blank');
         break;
       case 'twitter':
-        shareUrl = `https://twitter.com/intent/tweet?text=${encodeURIComponent(text)}&url=${encodeURIComponent(url)}`;
+        window.open(`https://twitter.com/intent/tweet?text=${encodeURIComponent(shareText)}`, '_blank');
         break;
       case 'threads':
-        shareUrl = `https://threads.net/intent/post?text=${encodeURIComponent(text)}`;
+        navigator.clipboard.writeText(shareText);
+        alert('已複製到剪貼簿! 📋\n請到 Threads 貼上分享 ✨');
         break;
       case 'copy':
-        navigator.clipboard.writeText(text + '\n\n' + url);
-        alert('✅ 已複製到剪貼簿!\n\n可以貼到 IG 限時動態或 TikTok 了!');
-        return;
+        navigator.clipboard.writeText(shareText);
+        alert('已複製到剪貼簿! 📋\n可以貼到 IG 限動或任何地方分享 ✨');
+        break;
       default:
-        return;
+        break;
     }
-    
-    window.open(shareUrl, '_blank', 'width=600,height=400');
   };
 
-  // 心情日曆相關函數
-  const getCalendarData = () => {
-    const year = calendarDate.getFullYear();
-    const month = calendarDate.getMonth();
-    
+  const getCalendarDays = (year, month) => {
     const firstDay = new Date(year, month, 1);
     const lastDay = new Date(year, month + 1, 0);
-    const firstDayOfWeek = firstDay.getDay();
     const daysInMonth = lastDay.getDate();
+    const startingDayOfWeek = firstDay.getDay();
     
-    const calendar = [];
-    let week = new Array(7).fill(null);
-    
-    for (let i = 0; i < firstDayOfWeek; i++) {
-      week[i] = null;
+    const days = [];
+    for (let i = 0; i < startingDayOfWeek; i++) {
+      days.push(null);
+    }
+    for (let i = 1; i <= daysInMonth; i++) {
+      days.push(i);
     }
     
-    for (let day = 1; day <= daysInMonth; day++) {
-      const dayOfWeek = (firstDayOfWeek + day - 1) % 7;
-      const date = new Date(year, month, day);
-      
-      const dayLetters = letters.filter(letter => {
-        const letterDate = new Date(letter.date);
-        return letterDate.getFullYear() === year &&
-               letterDate.getMonth() === month &&
-               letterDate.getDate() === day;
-      });
-      
-      week[dayOfWeek] = {
-        day,
-        date,
-        letters: dayLetters,
-        emotion: dayLetters.length > 0 ? dayLetters[dayLetters.length - 1].emotion : null
-      };
-      
-      if (dayOfWeek === 6) {
-        calendar.push(week);
-        week = new Array(7).fill(null);
-      }
-    }
-    
-    if (week.some(d => d !== null)) {
-      calendar.push(week);
-    }
-    
-    return calendar;
+    return days;
   };
 
-  const changeMonth = (offset) => {
-    const newDate = new Date(calendarDate);
-    newDate.setMonth(newDate.getMonth() + offset);
-    setCalendarDate(newDate);
+  const hasLetterOnDate = (day) => {
+    if (!day) return false;
+    const targetDate = new Date(calendarDate.getFullYear(), calendarDate.getMonth(), day);
+    return letters.some(letter => {
+      const letterDate = new Date(letter.date);
+      return letterDate.toDateString() === targetDate.toDateString();
+    });
   };
 
-  const handleDayClick = (dayData) => {
-    if (dayData.letters.length > 0) {
-      setSelectedDayLetters(dayData.letters);
+  const getLettersForDate = (day) => {
+    const targetDate = new Date(calendarDate.getFullYear(), calendarDate.getMonth(), day);
+    return letters.filter(letter => {
+      const letterDate = new Date(letter.date);
+      return letterDate.toDateString() === targetDate.toDateString();
+    });
+  };
+
+  const handleDateClick = (day) => {
+    if (!day) return;
+    const dayLetters = getLettersForDate(day);
+    if (dayLetters.length > 0) {
+      setSelectedDayLetters(dayLetters);
       setShowDayDetail(true);
-      setShowCalendar(false);
     }
   };
 
-  const isToday = (date) => {
-    const today = new Date();
-    return date.getFullYear() === today.getFullYear() &&
-           date.getMonth() === today.getMonth() &&
-           date.getDate() === today.getDate();
+  const previousMonth = () => {
+    setCalendarDate(new Date(calendarDate.getFullYear(), calendarDate.getMonth() - 1));
   };
+
+  const nextMonth = () => {
+    setCalendarDate(new Date(calendarDate.getFullYear(), calendarDate.getMonth() + 1));
+  };
+
+  const calendarDays = getCalendarDays(calendarDate.getFullYear(), calendarDate.getMonth());
+  const monthNames = ['一月', '二月', '三月', '四月', '五月', '六月', '七月', '八月', '九月', '十月', '十一月', '十二月'];
+  const weekDays = ['日', '一', '二', '三', '四', '五', '六'];
 
   if (authLoading) {
     return (
       <div className="min-h-screen bg-gradient-to-br from-pink-50 via-purple-50 to-blue-50 flex items-center justify-center">
         <div className="text-center">
-          <div className="w-12 h-12 border-4 border-purple-500 border-t-transparent rounded-full animate-spin mx-auto mb-4" />
+          <div className="w-16 h-16 border-4 border-purple-500 border-t-transparent rounded-full animate-spin mx-auto mb-4" />
           <p className="text-gray-600">載入中...</p>
         </div>
       </div>
@@ -533,741 +500,530 @@ const HealingNoteApp = () => {
   }
 
   if (!user) {
-    return <LoginPage />;
+    return <LoginPage onLoginSuccess={() => setAuthLoading(false)} />;
   }
 
-  const consecutiveDays = checkConsecutiveDays(letters);
-  const totalDays = getTotalDays(letters);
-  const canGenerateTrend = totalDays >= 4; // 改為總天數 >= 4 天
-  const calendarData = getCalendarData();
-  const isLimitReached = dailyCount >= DAILY_LIMIT;
-
   return (
-    <div className="min-h-screen bg-gradient-to-br from-pink-50 via-purple-50 to-blue-50">
-      {/* Header */}
-      <div className="bg-white/80 backdrop-blur-sm border-b border-purple-100 sticky top-0 z-10">
-        <div className="max-w-4xl mx-auto px-4 py-4 flex justify-between items-center">
+    <div className="min-h-screen bg-gradient-to-br from-pink-50 via-purple-50 to-blue-50 p-4">
+      <div className="max-w-4xl mx-auto">
+        {/* Header */}
+        <div className="flex justify-between items-center mb-6">
           <div className="flex items-center gap-3">
             <img src={OTTER_IMAGE} alt="歐特" className="w-12 h-12 object-contain" />
             <div>
-              <h1 className="text-xl font-medium text-gray-800">HealingNote 療心筆記</h1>
-              <p className="text-xs text-gray-500 hidden sm:block">每一個情緒都值得被理解 💙</p>
+              <h1 className="text-2xl font-medium text-gray-800">HealingNote 💙</h1>
+              <p className="text-sm text-gray-600">
+                嗨 {user.displayName || user.email || '使用者'} ✨
+                {user.isLineUser && <span className="ml-1 text-xs text-green-600">(LINE 登入)</span>}
+              </p>
             </div>
           </div>
-          <div className="flex gap-2 items-center flex-wrap">
-            <span className="text-sm text-gray-600 hidden sm:inline">
-              {user.email}
-            </span>
-            {(showHistory || showTrend || showStats || showCalendar || showDayDetail) && (
-              <button
-                onClick={goHome}
-                className="px-4 py-2 rounded-full bg-pink-100 text-pink-700 hover:bg-pink-200 transition-all flex items-center gap-2"
-              >
-                <Home size={16} />
-                <span className="hidden sm:inline">首頁</span>
-              </button>
-            )}
-            <button
-              onClick={() => { setShowHistory(!showHistory); setShowTrend(false); setShowStats(false); setShowCalendar(false); setShowDayDetail(false); setCurrentLetter(null); }}
-              className="px-4 py-2 rounded-full bg-purple-100 text-purple-700 hover:bg-purple-200 transition-all flex items-center gap-2"
-            >
-              <Clock size={16} />
-              <span className="hidden sm:inline">歷史</span> ({letters.length})
-            </button>
-            {letters.length > 0 && (
-              <button
-                onClick={() => { setShowCalendar(!showCalendar); setShowHistory(false); setShowTrend(false); setShowStats(false); setShowDayDetail(false); setCurrentLetter(null); }}
-                className="px-4 py-2 rounded-full bg-green-100 text-green-700 hover:bg-green-200 transition-all flex items-center gap-2"
-              >
-                <Calendar size={16} />
-                <span className="hidden sm:inline">日曆</span>
-              </button>
-            )}
-            {Object.keys(emotionStats).length > 0 && (
-              <button
-                onClick={() => { setShowStats(!showStats); setShowHistory(false); setShowTrend(false); setShowCalendar(false); setShowDayDetail(false); setCurrentLetter(null); }}
-                className="px-4 py-2 rounded-full bg-blue-100 text-blue-700 hover:bg-blue-200 transition-all flex items-center gap-2"
-              >
-                <BarChart3 size={16} />
-                <span className="hidden sm:inline">統計</span>
-              </button>
-            )}
-            {trendAnalyses.length > 0 && (
-              <button
-                onClick={() => { setShowTrend(!showTrend); setShowHistory(false); setShowStats(false); setShowCalendar(false); setShowDayDetail(false); setCurrentLetter(null); }}
-                className="px-4 py-2 rounded-full bg-indigo-100 text-indigo-700 hover:bg-indigo-200 transition-all flex items-center gap-2"
-              >
-                <TrendingUp size={16} />
-                <span className="hidden sm:inline">趨勢</span>
-              </button>
-            )}
-            <button
-              onClick={handleLogout}
-              className="px-4 py-2 rounded-full bg-gray-100 text-gray-700 hover:bg-gray-200 transition-all flex items-center gap-2"
-              title="登出"
-            >
-              <LogOut size={16} />
-            </button>
-          </div>
+          <button
+            onClick={handleLogout}
+            className="flex items-center gap-2 px-4 py-2 rounded-xl bg-white/80 backdrop-blur-sm text-gray-600 hover:text-gray-800 hover:bg-white transition-all shadow-sm"
+          >
+            <LogOut size={18} />
+            <span className="text-sm">登出</span>
+          </button>
         </div>
-      </div>
 
-      <div className="max-w-4xl mx-auto px-4 py-8">
-        {loading ? (
-          <div className="text-center py-12">
-            <div className="w-12 h-12 border-4 border-purple-500 border-t-transparent rounded-full animate-spin mx-auto mb-4" />
-            <p className="text-gray-600">載入中...</p>
-          </div>
-        ) : (
+        {/* 主要內容區 */}
+        {!showHistory && !showTrend && !showStats && !showCalendar && (
           <>
-            {/* 當天多筆記錄詳細頁面 */}
-            {showDayDetail && selectedDayLetters.length > 0 && (
-              <div className="animate-fade-in">
-                <div className="flex items-center gap-3 mb-6">
-                  <button
-                    onClick={() => { setShowDayDetail(false); setShowCalendar(true); }}
-                    className="text-gray-500 hover:text-gray-700 transition-colors"
-                  >
-                    <ArrowLeft size={24} />
-                  </button>
-                  <h2 className="text-2xl font-medium text-gray-800">
-                    {new Date(selectedDayLetters[0].date).toLocaleDateString('zh-TW', {
-                      year: 'numeric',
-                      month: 'long',
-                      day: 'numeric'
-                    })} 的記錄 📝
-                  </h2>
-                  <span className="text-sm text-gray-500">
-                    共 {selectedDayLetters.length} 篇
-                  </span>
+            {/* 統計卡片 */}
+            <div className="grid grid-cols-3 gap-4 mb-6">
+              <div className="bg-white/80 backdrop-blur-sm rounded-2xl shadow-md p-4 text-center">
+                <div className="text-3xl font-bold text-purple-600">{letters.length}</div>
+                <div className="text-sm text-gray-600 mt-1">總記錄 📝</div>
+              </div>
+              <div className="bg-white/80 backdrop-blur-sm rounded-2xl shadow-md p-4 text-center">
+                <div className="text-3xl font-bold text-pink-600">{checkConsecutiveDays(letters)}</div>
+                <div className="text-sm text-gray-600 mt-1">連續天數 🔥</div>
+              </div>
+              <div className="bg-white/80 backdrop-blur-sm rounded-2xl shadow-md p-4 text-center">
+                <div className="text-3xl font-bold text-blue-600">{getTotalDays(letters)}</div>
+                <div className="text-sm text-gray-600 mt-1">記錄天數 📅</div>
+              </div>
+            </div>
+
+            {/* 當前信件顯示 */}
+            {currentLetter ? (
+              <div className="bg-white/90 backdrop-blur-sm rounded-3xl shadow-xl p-8 mb-6 animate-fade-in">
+                <div className="flex justify-between items-start mb-6">
+                  <div>
+                    <div className="flex items-center gap-2 mb-2">
+                      <Heart className="text-purple-600" size={24} />
+                      <h2 className="text-xl font-medium text-gray-800">給你的療癒信 💌</h2>
+                    </div>
+                    <p className="text-sm text-gray-500">
+                      📅 {new Date(currentLetter.date).toLocaleDateString('zh-TW', {
+                        year: 'numeric',
+                        month: 'long',
+                        day: 'numeric',
+                        hour: '2-digit',
+                        minute: '2-digit'
+                      })}
+                    </p>
+                  </div>
+                  {currentLetter.emotion && (
+                    <span className="px-4 py-2 bg-purple-100 text-purple-700 rounded-full text-sm font-medium">
+                      {emotionEmojis[currentLetter.emotion] || '💭'} {currentLetter.emotion}
+                    </span>
+                  )}
                 </div>
 
-                <div className="space-y-6">
-                  {selectedDayLetters.map((letter, index) => (
-                    <div key={letter.id} className="bg-white/90 backdrop-blur-sm rounded-3xl shadow-xl p-8">
-                      <div className="flex items-center justify-between mb-6">
-                        <div className="flex items-center gap-3">
-                          <img src={OTTER_IMAGE} alt="歐特" className="w-12 h-12 object-contain" />
-                          <div>
-                            <div className="flex items-center gap-2 text-purple-600">
-                              <Mail size={24} />
-                              <span className="font-medium">第 {index + 1} 篇記錄 💌</span>
-                            </div>
-                            {letter.emotion && (
-                              <div className="text-sm text-gray-500 mt-1">
-                                情緒: <span className="font-medium">{emotionEmojis[letter.emotion] || '💭'} {letter.emotion}</span>
-                              </div>
-                            )}
-                          </div>
-                        </div>
-                        <span className="text-sm text-gray-500">
-                          {new Date(letter.date).toLocaleTimeString('zh-TW', {
-                            hour: '2-digit',
-                            minute: '2-digit'
-                          })} ⏰
-                        </span>
-                      </div>
+                <div className="bg-gradient-to-br from-purple-50 to-pink-50 rounded-2xl p-6 mb-6">
+                  <p className="text-sm text-gray-600 mb-2">💭 你說:</p>
+                  <p className="text-gray-700 italic">"{currentLetter.userInput}"</p>
+                </div>
 
-                      {/* 使用者輸入 */}
-                      <div className="mb-4 p-4 bg-gray-50 rounded-xl">
-                        <p className="text-sm text-gray-500 mb-2">💭 你的心情:</p>
-                        <p className="text-gray-700">{letter.userInput}</p>
-                      </div>
-
-                      {/* AI 回應 */}
-                      <div className="prose prose-lg max-w-none">
-                        <div className="whitespace-pre-wrap text-gray-700 leading-relaxed">
-                          {letter.content}
-                        </div>
-                      </div>
-                    </div>
-                  ))}
+                <div className="prose prose-lg max-w-none">
+                  <p className="text-gray-700 leading-relaxed whitespace-pre-wrap">
+                    {currentLetter.letterContent}
+                  </p>
                 </div>
 
                 <button
-                  onClick={() => { setShowDayDetail(false); setShowCalendar(true); }}
-                  className="mt-6 w-full py-3 rounded-2xl bg-purple-100 text-purple-700 hover:bg-purple-200 transition-all font-medium"
+                  onClick={goHome}
+                  className="mt-6 w-full py-3 rounded-2xl bg-gradient-to-r from-purple-500 to-pink-500 text-white font-medium hover:shadow-lg transition-all flex items-center justify-center gap-2"
                 >
-                  📅 返回日曆
+                  <Home size={20} />
+                  回到首頁 🏠
                 </button>
               </div>
-            )}
-
-            {/* 心情日曆頁面 */}
-            {showCalendar && !showDayDetail && (
-              <div className="animate-fade-in">
-                <div className="flex items-center gap-3 mb-6">
-                  <button
-                    onClick={goHome}
-                    className="text-gray-500 hover:text-gray-700 transition-colors"
-                  >
-                    <ArrowLeft size={24} />
-                  </button>
-                  <div className="flex items-center gap-2 text-green-600">
-                    <Calendar size={24} />
-                    <span className="font-medium text-xl">心情日曆 📅</span>
-                  </div>
+            ) : (
+              /* 輸入表單 */
+              <div className="bg-white/90 backdrop-blur-sm rounded-3xl shadow-xl p-8 mb-6">
+                <div className="flex items-center gap-2 mb-4">
+                  <Sparkles className="text-purple-600" size={24} />
+                  <h2 className="text-xl font-medium text-gray-800">今天想說什麼呢? 💭</h2>
                 </div>
 
-                <div className="bg-white/90 backdrop-blur-sm rounded-3xl shadow-xl p-6 md:p-8">
-                  {/* 月份選擇器 */}
-                  <div className="flex items-center justify-between mb-6">
-                    <button
-                      onClick={() => changeMonth(-1)}
-                      className="p-2 rounded-full hover:bg-gray-100 transition-colors"
-                    >
-                      <ChevronLeft size={24} className="text-gray-600" />
-                    </button>
-                    
-                    <h3 className="text-xl font-medium text-gray-800">
-                      {calendarDate.getFullYear()} 年 {calendarDate.getMonth() + 1} 月
-                    </h3>
-                    
-                    <button
-                      onClick={() => changeMonth(1)}
-                      className="p-2 rounded-full hover:bg-gray-100 transition-colors"
-                    >
-                      <ChevronRight size={24} className="text-gray-600" />
-                    </button>
-                  </div>
-
-                  {/* 星期標題 */}
-                  <div className="grid grid-cols-7 gap-2 mb-4">
-                    {['日', '一', '二', '三', '四', '五', '六'].map(day => (
-                      <div key={day} className="text-center font-medium text-gray-600 text-sm">
-                        {day}
-                      </div>
-                    ))}
-                  </div>
-
-                  {/* 日曆格子 */}
-                  <div className="space-y-2">
-                    {calendarData.map((week, weekIndex) => (
-                      <div key={weekIndex} className="grid grid-cols-7 gap-2">
-                        {week.map((dayData, dayIndex) => (
-                          <div
-                            key={dayIndex}
-                            onClick={() => dayData && dayData.letters.length > 0 && handleDayClick(dayData)}
-                            className={`
-                              aspect-square flex flex-col items-center justify-center rounded-xl
-                              ${dayData ? 'bg-gray-50' : ''}
-                              ${dayData && dayData.letters.length > 0 ? 'cursor-pointer hover:bg-purple-50 hover:shadow-md transition-all' : ''}
-                              ${dayData && isToday(dayData.date) ? 'ring-2 ring-purple-500' : ''}
-                            `}
-                          >
-                            {dayData && (
-                              <>
-                                <span className="text-sm text-gray-700 mb-1">
-                                  {dayData.day}
-                                </span>
-                                {dayData.emotion && (
-                                  <span className="text-2xl">
-                                    {emotionEmojis[dayData.emotion] || '💭'}
-                                  </span>
-                                )}
-                                {dayData.letters.length > 1 && (
-                                  <span className="text-xs text-gray-400 mt-1">
-                                    {dayData.letters.length}篇
-                                  </span>
-                                )}
-                              </>
-                            )}
-                          </div>
-                        ))}
-                      </div>
-                    ))}
-                  </div>
-
-                  {/* 說明 */}
-                  <div className="mt-6 p-4 bg-purple-50 rounded-xl">
-                    <p className="text-sm text-gray-600 text-center">
-                      💡 點擊有 emoji 的日期可以查看當天的記錄
-                    </p>
-                    {letters.length === 0 && (
-                      <p className="text-sm text-gray-500 text-center mt-2">
-                        開始記錄心情,日曆就會顯示你的情緒變化喔! ✨
-                      </p>
-                    )}
-                  </div>
-                </div>
-              </div>
-            )}
-
-            {/* 主頁面 */}
-            {!showHistory && !showTrend && !showStats && !showCalendar && !showDayDetail && (
-              <>
-                {/* 新用戶:完整簡介 */}
-                {!currentLetter && letters.length === 0 && !isLimitReached && (
-                  <div className="text-center mb-8 animate-fade-in">
-                    <div className="inline-block mb-6">
-                      <img src={OTTER_IMAGE} alt="歐特" className="w-32 h-auto mx-auto mb-4" />
-                    </div>
-                    <h2 className="text-2xl font-medium text-gray-800 mb-4">
-                      你的私密情緒日記 📔
-                    </h2>
-                    <div className="max-w-2xl mx-auto text-left bg-white/60 rounded-2xl p-6 mb-4">
-                      <p className="text-gray-700 mb-4">
-                        記錄每一天的心情起伏 🌈<br />
-                        不只回應你,更幫你看見情緒變化 💙<br />
-                        你的專屬情緒管家 🦦
-                      </p>
-                      <div className="space-y-2 text-sm text-gray-600">
-                        <p>1️⃣ 專注情緒健康,溫暖細膩的覺察 ✨</p>
-                        <p>2️⃣ 保存記錄,追蹤心情變化 📊</p>
-                        <p>3️⃣ 智能趨勢分析,陪你看見自己的成長 🌱</p>
-                      </div>
+                {dailyCount >= DAILY_LIMIT && (
+                  <div className="mb-4 p-4 bg-yellow-50 border border-yellow-200 rounded-2xl flex items-start gap-3">
+                    <AlertCircle className="text-yellow-600 flex-shrink-0 mt-1" size={20} />
+                    <div className="text-sm text-yellow-800">
+                      <p className="font-medium mb-1">今天已達到免費版限制 ({DAILY_LIMIT} 次) 💙</p>
+                      <p className="text-xs text-yellow-700">明天再來繼續記錄吧!每天都能有新的成長 ✨</p>
                     </div>
                   </div>
                 )}
 
-                {/* 老用戶:簡短歡迎 */}
-                {!currentLetter && letters.length > 0 && !isLimitReached && (
-                  <div className="text-center mb-8 animate-fade-in">
-                    <div className="inline-block mb-4">
-                      <img src={OTTER_IMAGE} alt="歐特" className="w-20 h-auto mx-auto" />
-                    </div>
-                    <h2 className="text-2xl font-medium text-gray-800 mb-2">
-                      歡迎回來! 🦦✨
-                    </h2>
-                    <p className="text-gray-600 mb-4">
-                      今天想記錄什麼心情呢? 💭
-                    </p>
-                    <div className="max-w-md mx-auto bg-white/60 rounded-2xl p-4">
-                      <div className="grid grid-cols-3 gap-3 text-sm">
-                        <div className="text-center">
-                          <div className="text-2xl mb-1">📊</div>
-                          <div className="text-gray-600">已記錄</div>
-                          <div className="font-medium text-purple-600">{totalDays} 天</div>
-                        </div>
-                        <div className="text-center">
-                          <div className="text-2xl mb-1">🔥</div>
-                          <div className="text-gray-600">連續</div>
-                          <div className="font-medium text-purple-600">{consecutiveDays} 天</div>
-                        </div>
-                        <div className="text-center">
-                          <div className="text-2xl mb-1">💌</div>
-                          <div className="text-gray-600">總計</div>
-                          <div className="font-medium text-purple-600">{letters.length} 封</div>
-                        </div>
-                      </div>
-                    </div>
-                  </div>
-                )}
-
-                {/* 每日限制已達提示 */}
-                {isLimitReached && !currentLetter && (
-                  <div className="mb-6 p-6 bg-gradient-to-r from-orange-50 to-pink-50 rounded-3xl border-2 border-orange-200 animate-fade-in">
-                    <div className="flex items-start gap-4">
-                      <div className="flex-shrink-0">
-                        <AlertCircle size={32} className="text-orange-500" />
-                      </div>
-                      <div className="flex-1">
-                        <h3 className="text-lg font-medium text-orange-800 mb-2">
-                          📔 今日記錄已達上限
-                        </h3>
-                        <p className="text-gray-700 mb-3">
-                          免費版每天限 {DAILY_LIMIT} 次記錄,你今天已經完成了 {dailyCount} 次記錄! 🎉
-                        </p>
-                        <div className="bg-white/60 rounded-xl p-4 mb-3">
-                          <p className="text-sm text-gray-600 mb-2">💡 小建議:</p>
-                          <ul className="text-sm text-gray-600 space-y-1 ml-4">
-                            <li>• 明天再來記錄新的心情 ☀️</li>
-                            <li>• 可以查看「日曆」回顧今天的記錄 📅</li>
-                            <li>• 或查看「統計」了解情緒變化 📊</li>
-                          </ul>
-                        </div>
-                        <div className="flex gap-3">
-                          <button
-                            onClick={() => setShowCalendar(true)}
-                            className="px-4 py-2 rounded-xl bg-white text-gray-700 hover:bg-gray-50 transition-all text-sm font-medium"
-                          >
-                            📅 查看日曆
-                          </button>
-                          {Object.keys(emotionStats).length > 0 && (
-                            <button
-                              onClick={() => setShowStats(true)}
-                              className="px-4 py-2 rounded-xl bg-white text-gray-700 hover:bg-gray-50 transition-all text-sm font-medium"
-                            >
-                              📊 查看統計
-                            </button>
-                          )}
-                        </div>
-                      </div>
-                    </div>
-                  </div>
-                )}
-
-                {/* 輸入區 */}
-                {!currentLetter && (
-                  <div className="bg-white/80 backdrop-blur-sm rounded-3xl shadow-lg p-6 mb-6">
-                    <div className="flex justify-between items-center mb-4">
-                      <h3 className="text-lg font-medium text-gray-700">今日心情記錄 ✍️</h3>
-                      <div className="text-sm text-gray-500">
-                        今日剩餘: <span className={`font-medium ${isLimitReached ? 'text-orange-600' : 'text-purple-600'}`}>
-                          {DAILY_LIMIT - dailyCount}
-                        </span> / {DAILY_LIMIT} 次
-                      </div>
-                    </div>
-                    
+                <form onSubmit={handleSubmit} className="space-y-4">
+                  <div className="relative">
                     <textarea
                       value={input}
                       onChange={(e) => setInput(e.target.value)}
-                      placeholder={isLimitReached ? "今日記錄已達上限,明天再來記錄新的心情吧! 💙" : "告訴我你最近的心情或煩惱... 💭"}
-                      className="w-full h-32 p-4 border-2 border-purple-100 rounded-2xl focus:border-purple-300 focus:outline-none resize-none text-gray-700"
-                      disabled={isGenerating || isLimitReached}
+                      placeholder="分享你的心情、煩惱、或任何想說的話...&#10;歐特會用溫暖的話語回應你 💙"
+                      className="w-full h-32 p-4 pr-12 border-2 border-purple-100 rounded-2xl focus:border-purple-300 focus:outline-none resize-none"
+                      disabled={isGenerating || dailyCount >= DAILY_LIMIT}
                     />
-                    
-                    <div className="flex gap-3 mt-4">
-                      <button
-                        onClick={startListening}
-                        disabled={isListening || isGenerating || isLimitReached}
-                        className={`flex-1 py-3 rounded-2xl font-medium transition-all flex items-center justify-center gap-2 ${
-                          isListening
-                            ? 'bg-red-500 text-white animate-pulse'
-                            : isLimitReached
-                            ? 'bg-gray-200 text-gray-400 cursor-not-allowed'
-                            : 'bg-purple-100 text-purple-700 hover:bg-purple-200'
-                        }`}
-                      >
-                        <Mic size={20} />
-                        {isListening ? '聆聽中... 🎤' : '語音 🎤'}
-                      </button>
-                      
-                      <button
-                        onClick={generateLetter}
-                        disabled={isGenerating || !input.trim() || isLimitReached}
-                        className={`flex-1 py-3 rounded-2xl font-medium transition-all flex items-center justify-center gap-2 ${
-                          isGenerating || isLimitReached
-                            ? 'bg-gray-300 text-gray-500'
-                            : 'bg-gradient-to-r from-purple-500 to-pink-500 text-white hover:shadow-lg'
-                        }`}
-                      >
-                        {isGenerating ? (
-                          <>
-                            <div className="w-5 h-5 border-2 border-white border-t-transparent rounded-full animate-spin" />
-                            覺察情緒中...
-                          </>
-                        ) : (
-                          <>
-                            <Send size={20} />
-                            看見你的情緒 ✨
-                          </>
-                        )}
-                      </button>
-                    </div>
-
-                    {/* 連續記錄進度 */}
-                    {letters.length > 0 && !isLimitReached && (
-                      <div className="mt-4 p-4 bg-purple-50 rounded-xl">
-                        <div className="flex items-center justify-between mb-2">
-                          <span className="text-sm text-gray-700">📊 記錄統計</span>
-                        </div>
-                        <div className="grid grid-cols-2 gap-3 text-sm">
-                          <div>
-                            <span className="text-gray-600">連續: </span>
-                            <span className="font-medium text-purple-600">{consecutiveDays} 天 🔥</span>
-                          </div>
-                          <div>
-                            <span className="text-gray-600">總計: </span>
-                            <span className="font-medium text-purple-600">{totalDays} 天 📅</span>
-                          </div>
-                        </div>
-                        {!canGenerateTrend && (
-                          <p className="text-xs text-gray-500 mt-2">
-                            💡 記錄滿 {4 - totalDays} 天,就能獲得趨勢分析 ✨
-                          </p>
-                        )}
-                      </div>
-                    )}
-                  </div>
-                )}
-
-                {/* 顯示當前信件 */}
-                {currentLetter && (
-                  <div className="bg-white/90 backdrop-blur-sm rounded-3xl shadow-xl p-8 mb-6 animate-fade-in">
-                    <div className="flex items-center justify-between mb-6">
-                      <div className="flex items-center gap-3">
-                        <img src={OTTER_IMAGE} alt="歐特" className="w-12 h-12 object-contain" />
-                        <div>
-                          <div className="flex items-center gap-2 text-purple-600">
-                            <Mail size={24} />
-                            <span className="font-medium">歐特的回應 💌</span>
-                          </div>
-                          {currentLetter.emotion && (
-                            <div className="text-sm text-gray-500 mt-1">
-                              情緒: <span className="font-medium">{emotionEmojis[currentLetter.emotion] || '💭'} {currentLetter.emotion}</span>
-                            </div>
-                          )}
-                        </div>
-                      </div>
-                      <span className="text-sm text-gray-500">
-                        {new Date(currentLetter.date).toLocaleDateString('zh-TW')} 📅
-                      </span>
-                    </div>
-                    
-                    <div className="prose prose-lg max-w-none">
-                      <div className="whitespace-pre-wrap text-gray-700 leading-relaxed">
-                        {currentLetter.content}
-                      </div>
-                    </div>
-
-                    {/* 社群分享按鈕 */}
-                    <div className="mt-6 p-4 bg-gradient-to-r from-pink-50 to-purple-50 rounded-2xl">
-                      <div className="flex items-center gap-2 mb-3">
-                        <Share2 size={20} className="text-purple-600" />
-                        <span className="text-sm font-medium text-gray-700">分享你的心情成長 ✨</span>
-                      </div>
-                      <div className="flex gap-2 flex-wrap">
-                        <button
-                          onClick={() => shareToSocial('facebook', currentLetter.content)}
-                          className="flex-1 min-w-[100px] px-4 py-2 rounded-xl bg-blue-600 text-white hover:bg-blue-700 transition-all text-sm font-medium flex items-center justify-center gap-2"
-                        >
-                          <Facebook size={16} />
-                          Facebook
-                        </button>
-                        <button
-                          onClick={() => shareToSocial('twitter', currentLetter.content)}
-                          className="flex-1 min-w-[100px] px-4 py-2 rounded-xl bg-sky-500 text-white hover:bg-sky-600 transition-all text-sm font-medium flex items-center justify-center gap-2"
-                        >
-                          <Twitter size={16} />
-                          X (Twitter)
-                        </button>
-                        <button
-                          onClick={() => shareToSocial('threads', currentLetter.content)}
-                          className="flex-1 min-w-[100px] px-4 py-2 rounded-xl bg-black text-white hover:bg-gray-800 transition-all text-sm font-medium"
-                        >
-                          Threads
-                        </button>
-                        <button
-                          onClick={() => shareToSocial('copy', currentLetter.content)}
-                          className="flex-1 min-w-[100px] px-4 py-2 rounded-xl bg-gradient-to-r from-pink-500 to-purple-500 text-white hover:shadow-lg transition-all text-sm font-medium"
-                        >
-                          複製文案
-                        </button>
-                      </div>
-                      <p className="text-xs text-gray-500 mt-2 text-center">
-                        💡 複製文案可貼到 IG 限動或 TikTok
-                      </p>
-                    </div>
-
                     <button
-                      onClick={() => setCurrentLetter(null)}
-                      className="mt-6 w-full py-3 rounded-2xl bg-purple-100 text-purple-700 hover:bg-purple-200 transition-all font-medium"
+                      type="button"
+                      onClick={handleVoiceInput}
+                      className={`absolute right-3 top-3 p-2 rounded-xl transition-all ${
+                        isListening 
+                          ? 'bg-red-500 text-white animate-pulse' 
+                          : 'bg-purple-100 text-purple-600 hover:bg-purple-200'
+                      }`}
+                      disabled={isGenerating || dailyCount >= DAILY_LIMIT}
                     >
-                      {isLimitReached ? '查看今日記錄 📅' : '繼續記錄心情 ✍️'}
+                      <Mic size={20} />
                     </button>
+                  </div>
 
-                    {/* 趨勢分析提示 - 修正條件 */}
-                    {canGenerateTrend && trendAnalyses.length === 0 && (
-                      <div className="mt-4 p-6 bg-gradient-to-r from-blue-50 to-purple-50 rounded-2xl border-2 border-blue-200 animate-fade-in">
-                        <div className="flex items-center gap-2 text-blue-700 mb-3">
-                          <Sparkles size={24} />
-                          <span className="font-medium text-lg">已記錄 {totalDays} 天! 🎉</span>
-                        </div>
-                        <p className="text-gray-700 mb-4">
-                          太棒了!你已經記錄了 {totalDays} 天的心情,現在可以為你生成專屬的心情趨勢分析,
-                          看看這段時間的變化和成長 💙✨
-                        </p>
-                        <button
-                          onClick={() => generateAndSaveTrendAnalysis(letters)}
-                          className="w-full py-3 rounded-2xl bg-gradient-to-r from-blue-500 to-purple-500 text-white font-medium hover:shadow-lg transition-all flex items-center justify-center gap-2"
-                        >
-                          <TrendingUp size={20} />
-                          為我生成心情趨勢分析 ✨
-                        </button>
-                      </div>
+                  <button
+                    type="submit"
+                    disabled={isGenerating || !input.trim() || dailyCount >= DAILY_LIMIT}
+                    className={`w-full py-3 rounded-2xl font-medium transition-all flex items-center justify-center gap-2 ${
+                      isGenerating || !input.trim() || dailyCount >= DAILY_LIMIT
+                        ? 'bg-gray-300 text-gray-500'
+                        : 'bg-gradient-to-r from-purple-500 to-pink-500 text-white hover:shadow-lg'
+                    }`}
+                  >
+                    {isGenerating ? (
+                      <>
+                        <div className="w-5 h-5 border-2 border-white border-t-transparent rounded-full animate-spin" />
+                        歐特正在溫柔地回應你...
+                      </>
+                    ) : (
+                      <>
+                        <Send size={20} />
+                        送出 💌
+                      </>
+                    )}
+                  </button>
+                </form>
+
+                <div className="mt-4 text-center text-xs text-gray-500">
+                  <p>💡 剩餘次數: {DAILY_LIMIT - dailyCount} / {DAILY_LIMIT}</p>
+                </div>
+              </div>
+            )}
+
+            {/* 功能按鈕 */}
+            <div className="grid grid-cols-2 gap-4">
+              <button
+                onClick={() => setShowHistory(true)}
+                className="bg-white/80 backdrop-blur-sm rounded-2xl shadow-md p-6 hover:shadow-lg transition-all text-left group"
+              >
+                <Clock className="text-blue-600 mb-3 group-hover:scale-110 transition-transform" size={28} />
+                <h3 className="font-medium text-gray-800 mb-1">歷史記錄 📚</h3>
+                <p className="text-sm text-gray-600">查看過去的對話</p>
+              </button>
+
+              <button
+                onClick={() => setShowCalendar(true)}
+                className="bg-white/80 backdrop-blur-sm rounded-2xl shadow-md p-6 hover:shadow-lg transition-all text-left group"
+              >
+                <Calendar className="text-green-600 mb-3 group-hover:scale-110 transition-transform" size={28} />
+                <h3 className="font-medium text-gray-800 mb-1">日曆檢視 📅</h3>
+                <p className="text-sm text-gray-600">看看哪些日子有記錄</p>
+              </button>
+
+              <button
+                onClick={() => setShowStats(true)}
+                className="bg-white/80 backdrop-blur-sm rounded-2xl shadow-md p-6 hover:shadow-lg transition-all text-left group"
+              >
+                <BarChart3 className="text-purple-600 mb-3 group-hover:scale-110 transition-transform" size={28} />
+                <h3 className="font-medium text-gray-800 mb-1">情緒統計 📊</h3>
+                <p className="text-sm text-gray-600">了解你的情緒變化</p>
+              </button>
+
+              <button
+                onClick={generateTrend}
+                disabled={isGenerating || letters.length < 3}
+                className={`rounded-2xl shadow-md p-6 transition-all text-left group ${
+                  isGenerating || letters.length < 3
+                    ? 'bg-gray-200 cursor-not-allowed'
+                    : 'bg-white/80 backdrop-blur-sm hover:shadow-lg'
+                }`}
+              >
+                <TrendingUp 
+                  className={`mb-3 group-hover:scale-110 transition-transform ${
+                    letters.length < 3 ? 'text-gray-400' : 'text-indigo-600'
+                  }`} 
+                  size={28} 
+                />
+                <h3 className={`font-medium mb-1 ${letters.length < 3 ? 'text-gray-500' : 'text-gray-800'}`}>
+                  趨勢分析 📈
+                </h3>
+                <p className={`text-sm ${letters.length < 3 ? 'text-gray-400' : 'text-gray-600'}`}>
+                  {letters.length < 3 ? '需要至少 3 封記錄' : '分析你的心情趨勢'}
+                </p>
+              </button>
+            </div>
+          </>
+        )}
+
+        {/* 日曆檢視頁面 */}
+        {showCalendar && !showDayDetail && (
+          <div className="animate-fade-in">
+            <div className="flex items-center gap-3 mb-6">
+              <button
+                onClick={goHome}
+                className="text-gray-500 hover:text-gray-700 transition-colors"
+              >
+                <ArrowLeft size={24} />
+              </button>
+              <div className="flex items-center gap-2 text-green-600">
+                <Calendar size={24} />
+                <span className="font-medium text-xl">日曆檢視 📅</span>
+              </div>
+            </div>
+
+            <div className="bg-white/90 backdrop-blur-sm rounded-3xl shadow-xl p-8">
+              {/* 月份選擇 */}
+              <div className="flex items-center justify-between mb-6">
+                <button
+                  onClick={previousMonth}
+                  className="p-2 rounded-lg hover:bg-gray-100 transition-colors"
+                >
+                  <ChevronLeft size={24} className="text-gray-600" />
+                </button>
+                <h3 className="text-xl font-medium text-gray-800">
+                  {calendarDate.getFullYear()} 年 {monthNames[calendarDate.getMonth()]}
+                </h3>
+                <button
+                  onClick={nextMonth}
+                  className="p-2 rounded-lg hover:bg-gray-100 transition-colors"
+                >
+                  <ChevronRight size={24} className="text-gray-600" />
+                </button>
+              </div>
+
+              {/* 星期標題 */}
+              <div className="grid grid-cols-7 gap-2 mb-2">
+                {weekDays.map(day => (
+                  <div key={day} className="text-center text-sm font-medium text-gray-600 py-2">
+                    {day}
+                  </div>
+                ))}
+              </div>
+
+              {/* 日期格子 */}
+              <div className="grid grid-cols-7 gap-2">
+                {calendarDays.map((day, index) => (
+                  <button
+                    key={index}
+                    onClick={() => handleDateClick(day)}
+                    disabled={!day || !hasLetterOnDate(day)}
+                    className={`aspect-square rounded-lg p-2 text-center transition-all ${
+                      !day
+                        ? 'invisible'
+                        : hasLetterOnDate(day)
+                        ? 'bg-gradient-to-br from-purple-500 to-pink-500 text-white hover:shadow-lg cursor-pointer'
+                        : 'bg-gray-50 text-gray-400 cursor-default'
+                    }`}
+                  >
+                    {day}
+                  </button>
+                ))}
+              </div>
+
+              <div className="mt-6 p-4 bg-purple-50 rounded-2xl text-sm text-gray-600 text-center">
+                💡 點擊有顏色的日期查看當天的記錄
+              </div>
+            </div>
+          </div>
+        )}
+
+        {/* 單日詳細記錄 */}
+        {showDayDetail && (
+          <div className="animate-fade-in">
+            <div className="flex items-center gap-3 mb-6">
+              <button
+                onClick={() => setShowDayDetail(false)}
+                className="text-gray-500 hover:text-gray-700 transition-colors"
+              >
+                <ArrowLeft size={24} />
+              </button>
+              <h2 className="text-2xl font-medium text-gray-800">
+                📅 {new Date(selectedDayLetters[0].date).toLocaleDateString('zh-TW', {
+                  year: 'numeric',
+                  month: 'long',
+                  day: 'numeric'
+                })}
+              </h2>
+            </div>
+
+            <div className="space-y-4">
+              {selectedDayLetters.map((letter) => (
+                <div
+                  key={letter.id}
+                  className="bg-white/80 backdrop-blur-sm rounded-2xl shadow-md p-6 hover:shadow-lg transition-all cursor-pointer"
+                  onClick={() => {
+                    setCurrentLetter(letter);
+                    setShowCalendar(false);
+                    setShowDayDetail(false);
+                  }}
+                >
+                  <div className="flex justify-between items-start mb-3">
+                    <span className="text-sm text-gray-500">
+                      ⏰ {new Date(letter.date).toLocaleTimeString('zh-TW', {
+                        hour: '2-digit',
+                        minute: '2-digit'
+                      })}
+                    </span>
+                    {letter.emotion && (
+                      <span className="text-sm px-3 py-1 bg-purple-100 text-purple-700 rounded-full">
+                        {emotionEmojis[letter.emotion] || '💭'} {letter.emotion}
+                      </span>
                     )}
                   </div>
-                )}
-              </>
-            )}
-
-            {/* 歷史記錄頁面 */}
-            {showHistory && (
-              <div className="space-y-4">
-                <div className="flex items-center gap-3 mb-6">
-                  <button
-                    onClick={goHome}
-                    className="text-gray-500 hover:text-gray-700 transition-colors"
-                  >
-                    <ArrowLeft size={24} />
-                  </button>
-                  <h2 className="text-2xl font-medium text-gray-800">歷史記錄 📚</h2>
+                  <p className="text-gray-600 line-clamp-2">{letter.userInput}</p>
                 </div>
-                {letters.length === 0 ? (
-                  <div className="text-center py-12 text-gray-500">
-                    還沒有任何記錄喔 💭<br />
-                    開始記錄你的第一個心情吧! ✨
-                  </div>
-                ) : (
-                  letters.slice().reverse().map((letter) => (
-                    <div
-                      key={letter.id}
-                      className="bg-white/80 backdrop-blur-sm rounded-2xl shadow-md p-6 hover:shadow-lg transition-all cursor-pointer"
-                      onClick={() => {
-                        setCurrentLetter(letter);
-                        setShowHistory(false);
-                      }}
-                    >
-                      <div className="flex justify-between items-start mb-3">
-                        <span className="text-sm text-gray-500">
-                          📅 {new Date(letter.date).toLocaleDateString('zh-TW', {
-                            year: 'numeric',
-                            month: 'long',
-                            day: 'numeric'
-                          })}
+              ))}
+            </div>
+          </div>
+        )}
+
+        {/* 歷史記錄頁面 */}
+        {showHistory && (
+          <div className="animate-fade-in">
+            <div className="space-y-4">
+              <div className="flex items-center gap-3 mb-6">
+                <button
+                  onClick={goHome}
+                  className="text-gray-500 hover:text-gray-700 transition-colors"
+                >
+                  <ArrowLeft size={24} />
+                </button>
+                <h2 className="text-2xl font-medium text-gray-800">歷史記錄 📚</h2>
+              </div>
+              {letters.length === 0 ? (
+                <div className="text-center py-12 text-gray-500">
+                  還沒有任何記錄喔 💭<br />
+                  開始記錄你的第一個心情吧! ✨
+                </div>
+              ) : (
+                letters.slice().reverse().map((letter) => (
+                  <div
+                    key={letter.id}
+                    className="bg-white/80 backdrop-blur-sm rounded-2xl shadow-md p-6 hover:shadow-lg transition-all cursor-pointer"
+                    onClick={() => {
+                      setCurrentLetter(letter);
+                      setShowHistory(false);
+                    }}
+                  >
+                    <div className="flex justify-between items-start mb-3">
+                      <span className="text-sm text-gray-500">
+                        📅 {new Date(letter.date).toLocaleDateString('zh-TW', {
+                          year: 'numeric',
+                          month: 'long',
+                          day: 'numeric'
+                        })}
+                      </span>
+                      {letter.emotion && (
+                        <span className="text-sm px-3 py-1 bg-purple-100 text-purple-700 rounded-full">
+                          {emotionEmojis[letter.emotion] || '💭'} {letter.emotion}
                         </span>
-                        {letter.emotion && (
-                          <span className="text-sm px-3 py-1 bg-purple-100 text-purple-700 rounded-full">
-                            {emotionEmojis[letter.emotion] || '💭'} {letter.emotion}
-                          </span>
-                        )}
-                      </div>
-                      <p className="text-gray-600 line-clamp-2">{letter.userInput}</p>
+                      )}
                     </div>
-                  ))
-                )}
+                    <p className="text-gray-600 line-clamp-2">{letter.userInput}</p>
+                  </div>
+                ))
+              )}
+            </div>
+          </div>
+        )}
+
+        {/* 情緒統計頁面 */}
+        {showStats && (
+          <div className="animate-fade-in">
+            <div className="flex items-center gap-3 mb-6">
+              <button
+                onClick={goHome}
+                className="text-gray-500 hover:text-gray-700 transition-colors"
+              >
+                <ArrowLeft size={24} />
+              </button>
+              <div className="flex items-center gap-2 text-blue-600">
+                <BarChart3 size={24} />
+                <span className="font-medium text-xl">情緒統計 📊</span>
               </div>
-            )}
+            </div>
 
-            {/* 情緒統計頁面 */}
-            {showStats && (
-              <div className="animate-fade-in">
-                <div className="flex items-center gap-3 mb-6">
-                  <button
-                    onClick={goHome}
-                    className="text-gray-500 hover:text-gray-700 transition-colors"
-                  >
-                    <ArrowLeft size={24} />
-                  </button>
-                  <div className="flex items-center gap-2 text-blue-600">
-                    <BarChart3 size={24} />
-                    <span className="font-medium text-xl">情緒統計 📊</span>
-                  </div>
-                </div>
-
-                <div className="bg-white/90 backdrop-blur-sm rounded-3xl shadow-xl p-8">
-                  <div className="space-y-4">
-                    {Object.entries(emotionStats)
-                      .sort((a, b) => b[1].percentage - a[1].percentage)
-                      .map(([emotion, data]) => (
-                        <div key={emotion} className="space-y-2">
-                          <div className="flex justify-between items-center">
-                            <span className="text-gray-700 font-medium">{emotion}</span>
-                            <span className="text-purple-600 font-medium">{data.percentage}% ✨</span>
-                          </div>
-                          <div className="w-full bg-gray-200 rounded-full h-3">
-                            <div
-                              className="bg-gradient-to-r from-purple-500 to-pink-500 h-3 rounded-full transition-all duration-500"
-                              style={{ width: `${data.percentage}%` }}
-                            />
-                          </div>
-                          <div className="text-sm text-gray-500">
-                            共 {data.count} 次記錄 📝
-                          </div>
-                        </div>
-                      ))}
-                  </div>
-
-                  {Object.keys(emotionStats).length === 0 && (
-                    <div className="text-center py-12 text-gray-500">
-                      還沒有足夠的記錄喔 💭<br />
-                      開始寫下你的心情吧! ✍️
-                    </div>
-                  )}
-                </div>
-              </div>
-            )}
-
-            {/* 趨勢分析頁面 */}
-            {showTrend && trendAnalyses.length > 0 && (
-              <div className="animate-fade-in">
-                <div className="flex items-center gap-3 mb-6">
-                  <button
-                    onClick={goHome}
-                    className="text-gray-500 hover:text-gray-700 transition-colors"
-                  >
-                    <ArrowLeft size={24} />
-                  </button>
-                  <div className="flex items-center gap-2 text-indigo-600">
-                    <TrendingUp size={24} />
-                    <span className="font-medium text-xl">心情趨勢分析 📈</span>
-                  </div>
-                </div>
-                
-                <div className="space-y-6">
-                  {trendAnalyses.map((analysis, index) => (
-                    <div key={analysis.id} className="bg-white/90 backdrop-blur-sm rounded-3xl shadow-xl p-8">
-                      <div className="flex items-center justify-between mb-4 pb-4 border-b border-gray-200">
-                        <div className="flex items-center gap-2">
-                          {index === 0 && (
-                            <span className="px-3 py-1 bg-indigo-100 text-indigo-700 text-sm rounded-full font-medium">
-                              最新 ✨
-                            </span>
-                          )}
-                          <span className="text-gray-600">
-                            第 {trendAnalyses.length - index} 次分析 📊
-                          </span>
-                        </div>
-                        <div className="text-right text-sm text-gray-500">
-                          <div>📅 {new Date(analysis.date).toLocaleDateString('zh-TW', {
-                            year: 'numeric',
-                            month: 'long',
-                            day: 'numeric'
-                          })}</div>
-                          <div className="text-xs">基於 {analysis.letterCount} 封記錄 💌</div>
-                        </div>
+            <div className="bg-white/90 backdrop-blur-sm rounded-3xl shadow-xl p-8">
+              <div className="space-y-4">
+                {Object.entries(emotionStats)
+                  .sort((a, b) => b[1].percentage - a[1].percentage)
+                  .map(([emotion, data]) => (
+                    <div key={emotion} className="space-y-2">
+                      <div className="flex justify-between items-center">
+                        <span className="text-gray-700 font-medium">{emotion}</span>
+                        <span className="text-purple-600 font-medium">{data.percentage}% ✨</span>
                       </div>
-                      <div className="prose prose-lg max-w-none">
-                        <div className="whitespace-pre-wrap text-gray-700 leading-relaxed">
-                          {analysis.content}
-                        </div>
+                      <div className="w-full bg-gray-200 rounded-full h-3">
+                        <div
+                          className="bg-gradient-to-r from-purple-500 to-pink-500 h-3 rounded-full transition-all duration-500"
+                          style={{ width: `${data.percentage}%` }}
+                        />
                       </div>
-
-                      {/* 社群分享按鈕 */}
-                      <div className="mt-6 p-4 bg-gradient-to-r from-pink-50 to-purple-50 rounded-2xl">
-                        <div className="flex items-center gap-2 mb-3">
-                          <Share2 size={20} className="text-purple-600" />
-                          <span className="text-sm font-medium text-gray-700">分享你的成長 ✨</span>
-                        </div>
-                        <div className="flex gap-2 flex-wrap">
-                          <button
-                            onClick={() => shareToSocial('facebook', analysis.content)}
-                            className="flex-1 min-w-[100px] px-4 py-2 rounded-xl bg-blue-600 text-white hover:bg-blue-700 transition-all text-sm font-medium flex items-center justify-center gap-2"
-                          >
-                            <Facebook size={16} />
-                            Facebook
-                          </button>
-                          <button
-                            onClick={() => shareToSocial('twitter', analysis.content)}
-                            className="flex-1 min-w-[100px] px-4 py-2 rounded-xl bg-sky-500 text-white hover:bg-sky-600 transition-all text-sm font-medium flex items-center justify-center gap-2"
-                          >
-                            <Twitter size={16} />
-                            X (Twitter)
-                          </button>
-                          <button
-                            onClick={() => shareToSocial('threads', analysis.content)}
-                            className="flex-1 min-w-[100px] px-4 py-2 rounded-xl bg-black text-white hover:bg-gray-800 transition-all text-sm font-medium"
-                          >
-                            Threads
-                          </button>
-                          <button
-                            onClick={() => shareToSocial('copy', analysis.content)}
-                            className="flex-1 min-w-[100px] px-4 py-2 rounded-xl bg-gradient-to-r from-pink-500 to-purple-500 text-white hover:shadow-lg transition-all text-sm font-medium"
-                          >
-                            複製文案
-                          </button>
-                        </div>
-                        <p className="text-xs text-gray-500 mt-2 text-center">
-                          💡 複製文案可貼到 IG 限動或 TikTok
-                        </p>
+                      <div className="text-sm text-gray-500">
+                        共 {data.count} 次記錄 📝
                       </div>
                     </div>
                   ))}
-                </div>
               </div>
-            )}
-          </>
+
+              {Object.keys(emotionStats).length === 0 && (
+                <div className="text-center py-12 text-gray-500">
+                  還沒有足夠的記錄喔 💭<br />
+                  開始寫下你的心情吧! ✍️
+                </div>
+              )}
+            </div>
+          </div>
+        )}
+
+        {/* 趨勢分析頁面 */}
+        {showTrend && trendAnalyses.length > 0 && (
+          <div className="animate-fade-in">
+            <div className="flex items-center gap-3 mb-6">
+              <button
+                onClick={goHome}
+                className="text-gray-500 hover:text-gray-700 transition-colors"
+              >
+                <ArrowLeft size={24} />
+              </button>
+              <div className="flex items-center gap-2 text-indigo-600">
+                <TrendingUp size={24} />
+                <span className="font-medium text-xl">心情趨勢分析 📈</span>
+              </div>
+            </div>
+            
+            <div className="space-y-6">
+              {trendAnalyses.map((analysis, index) => (
+                <div key={analysis.id} className="bg-white/90 backdrop-blur-sm rounded-3xl shadow-xl p-8">
+                  <div className="flex items-center justify-between mb-4 pb-4 border-b border-gray-200">
+                    <div className="flex items-center gap-2">
+                      {index === 0 && (
+                        <span className="px-3 py-1 bg-indigo-100 text-indigo-700 text-sm rounded-full font-medium">
+                          最新 ✨
+                        </span>
+                      )}
+                      <span className="text-gray-600">
+                        第 {trendAnalyses.length - index} 次分析 📊
+                      </span>
+                    </div>
+                    <div className="text-right text-sm text-gray-500">
+                      <div>📅 {new Date(analysis.date).toLocaleDateString('zh-TW', {
+                        year: 'numeric',
+                        month: 'long',
+                        day: 'numeric'
+                      })}</div>
+                      <div className="text-xs">基於 {analysis.letterCount} 封記錄 💌</div>
+                    </div>
+                  </div>
+                  <div className="prose prose-lg max-w-none">
+                    <div className="whitespace-pre-wrap text-gray-700 leading-relaxed">
+                      {analysis.content}
+                    </div>
+                  </div>
+
+                  {/* 社群分享按鈕 */}
+                  <div className="mt-6 p-4 bg-gradient-to-r from-pink-50 to-purple-50 rounded-2xl">
+                    <div className="flex items-center gap-2 mb-3">
+                      <Share2 size={20} className="text-purple-600" />
+                      <span className="text-sm font-medium text-gray-700">分享你的成長 ✨</span>
+                    </div>
+                    <div className="flex gap-2 flex-wrap">
+                      <button
+                        onClick={() => shareToSocial('facebook', analysis.content)}
+                        className="flex-1 min-w-[100px] px-4 py-2 rounded-xl bg-blue-600 text-white hover:bg-blue-700 transition-all text-sm font-medium flex items-center justify-center gap-2"
+                      >
+                        <Facebook size={16} />
+                        Facebook
+                      </button>
+                      <button
+                        onClick={() => shareToSocial('twitter', analysis.content)}
+                        className="flex-1 min-w-[100px] px-4 py-2 rounded-xl bg-sky-500 text-white hover:bg-sky-600 transition-all text-sm font-medium flex items-center justify-center gap-2"
+                      >
+                        <Twitter size={16} />
+                        X (Twitter)
+                      </button>
+                      <button
+                        onClick={() => shareToSocial('threads', analysis.content)}
+                        className="flex-1 min-w-[100px] px-4 py-2 rounded-xl bg-black text-white hover:bg-gray-800 transition-all text-sm font-medium"
+                      >
+                        Threads
+                      </button>
+                      <button
+                        onClick={() => shareToSocial('copy', analysis.content)}
+                        className="flex-1 min-w-[100px] px-4 py-2 rounded-xl bg-gradient-to-r from-pink-500 to-purple-500 text-white hover:shadow-lg transition-all text-sm font-medium"
+                      >
+                        複製文案
+                      </button>
+                    </div>
+                    <p className="text-xs text-gray-500 mt-2 text-center">
+                      💡 複製文案可貼到 IG 限動或 TikTok
+                    </p>
+                  </div>
+                </div>
+              ))}
+            </div>
+          </div>
         )}
       </div>
 

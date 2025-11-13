@@ -614,7 +614,7 @@ const HealingNoteApp = () => {
                     <textarea
                       value={input}
                       onChange={(e) => setInput(e.target.value)}
-                      placeholder="分享你的心情、煩惱、或任何想說的話...&#10;歐特會用溫暖的話語回應你 💙"
+                      placeholder="分享你的心情、煩惱、或任何想說的話...&#10;歐特都在這裡傾聽 💙"
                       className="w-full h-32 p-4 pr-12 border-2 border-purple-100 rounded-2xl focus:border-purple-300 focus:outline-none resize-none"
                       disabled={isGenerating || dailyCount >= DAILY_LIMIT}
                     />
@@ -644,7 +644,7 @@ const HealingNoteApp = () => {
                     {isGenerating ? (
                       <>
                         <div className="w-5 h-5 border-2 border-white border-t-transparent rounded-full animate-spin" />
-                        歐特正在溫柔地回應你...
+                        歐特正在理解你的心情...
                       </>
                     ) : (
                       <>

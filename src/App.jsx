@@ -1,3 +1,36 @@
+// 🔧 完整修復版 App.jsx
+// 修復問題:
+// 1. ✅ 歷史記錄顯示療癒信內容
+// 2. ✅ 趨勢報告 4 天邏輯
+// 3. ✅ 第 4 天療癒信下方顯示按鈕
+// 4. ✅ 進度提醒
+// 5. ✅ Markdown 格式清理
+
+// 關鍵修改說明:
+// 
+// 1. 歷史記錄部分 (line ~860):
+//    - 點擊歷史記錄卡片會顯示完整療癒信
+//    - 卡片上顯示療癒信預覽 (前 100 字)
+//
+// 2. 趨勢報告邏輯 (line ~250, ~580):
+//    - 檢查唯一天數 (getTotalDays)
+//    - 只有達到 4 天才顯示按鈕
+//    - 每 4 天更新一次
+//
+// 3. 療癒信下方按鈕 (line ~575):
+//    - 檢查是否為第 4 天記錄
+//    - 顯示生成趨勢報告按鈕
+//
+// 4. 進度提醒 (line ~660):
+//    - 顯示「再寫 X 天就能看到趨勢報告」
+//
+// 5. Markdown 清理 (line ~238):
+//    - 移除 ** 和 ## 標記
+
+// ========================================
+// 完整程式碼如下 (複製整個檔案):
+// ========================================
+
 import React, { useState, useEffect } from 'react';
 import { Heart, Mic, Send, Clock, TrendingUp, Mail, Sparkles, Home, ArrowLeft, LogOut, Calendar, BarChart3, ChevronLeft, ChevronRight, AlertCircle, Share2, Facebook, Twitter, Instagram } from 'lucide-react';
 import { onAuthStateChanged, signOut } from 'firebase/auth';
@@ -156,7 +189,7 @@ const HealingNoteApp = () => {
     return consecutiveDays;
   };
 
-  // 計算總記錄天數
+  // 🔧 計算總記錄天數 (唯一天數)
   const getTotalDays = (allLetters) => {
     if (allLetters.length === 0) return 0;
     const uniqueDates = new Set(allLetters.map(l => new Date(l.date).toDateString()));
@@ -278,12 +311,12 @@ const HealingNoteApp = () => {
     e.preventDefault();
     
     if (!input.trim()) {
-      alert('請輸入你的心情 📝');
+      alert('請輸入你的心情 💭');
       return;
     }
 
     if (dailyCount >= DAILY_LIMIT) {
-      alert(`免費版每天限制 ${DAILY_LIMIT} 次喔 ✍️\n\n明天再來記錄吧!`);
+      alert(`免費版每天限制 ${DAILY_LIMIT} 次喔 💙\n\n明天再來記錄吧!`);
       return;
     }
 
@@ -295,9 +328,14 @@ const HealingNoteApp = () => {
 
       const letter = await generateHealingLetter(input, emotion);
       
+      // 🔧 清理 Markdown 格式
+      const cleanedLetter = letter
+        .replace(/\*\*/g, '')  // 移除 **
+        .replace(/##\s*/g, ''); // 移除 ##
+      
       const newLetter = {
         userInput: input,
-        letterContent: letter,
+        letterContent: cleanedLetter,
         emotion: emotion,
         date: new Date().toISOString()
       };
@@ -307,17 +345,18 @@ const HealingNoteApp = () => {
       const docRef = await addDoc(collection(db, 'letters'), {
         userId: user.uid,
         userInput: input,
-        letterContent: letter,
+        letterContent: cleanedLetter,
         emotion: emotion,
         createdAt: Timestamp.now()
       });
 
       newLetter.id = docRef.id;
-      setLetters([...letters, newLetter]);
+      const updatedLetters = [...letters, newLetter];
+      setLetters(updatedLetters);
       
       setDailyCount(dailyCount + 1);
 
-      calculateEmotionStats([...letters, newLetter]);
+      calculateEmotionStats(updatedLetters);
       
       setInput('');
       
@@ -374,9 +413,12 @@ const HealingNoteApp = () => {
     setShowDayDetail(false);
   };
 
+  // 🔧 生成趨勢報告 (修正邏輯)
   const generateTrend = async () => {
-    if (letters.length < 3) {
-      alert('至少需要 3 封記錄才能生成趨勢分析喔 📊');
+    const totalDays = getTotalDays(letters);
+    
+    if (totalDays < 4) {
+      alert(`至少需要 4 天的記錄才能生成情緒健康報告喔 📊\n\n目前記錄了 ${totalDays} 天`);
       return;
     }
 
@@ -385,16 +427,21 @@ const HealingNoteApp = () => {
       const recentLetters = letters.slice(-10);
       const analysis = await generateTrendAnalysis(recentLetters);
       
+      // 🔧 清理 Markdown 格式
+      const cleanedAnalysis = analysis
+        .replace(/\*\*/g, '')
+        .replace(/##\s*/g, '');
+      
       const docRef = await addDoc(collection(db, 'trendAnalysis'), {
         userId: user.uid,
-        content: analysis,
+        content: cleanedAnalysis,
         letterCount: recentLetters.length,
         createdAt: Timestamp.now()
       });
 
       const newAnalysis = {
         id: docRef.id,
-        content: analysis,
+        content: cleanedAnalysis,
         letterCount: recentLetters.length,
         date: new Date().toISOString()
       };
@@ -411,7 +458,7 @@ const HealingNoteApp = () => {
   };
 
   const shareToSocial = (platform, content) => {
-    const shareText = `我在 HealingNote 記錄了我的心情成長 ❤️\n\n${content.substring(0, 100)}...\n\n一起來記錄你的心情吧! ✨`;
+    const shareText = `我在 HealingNote 記錄了我的心情成長 💙\n\n${content.substring(0, 100)}...\n\n一起來記錄你的心情吧! ✨`;
     
     switch(platform) {
       case 'facebook':
@@ -488,6 +535,11 @@ const HealingNoteApp = () => {
   const monthNames = ['一月', '二月', '三月', '四月', '五月', '六月', '七月', '八月', '九月', '十月', '十一月', '十二月'];
   const weekDays = ['日', '一', '二', '三', '四', '五', '六'];
 
+  // 🔧 計算進度
+  const totalDays = getTotalDays(letters);
+  const daysUntilReport = Math.max(0, 4 - totalDays);
+  const canGenerateReport = totalDays >= 4;
+
   if (authLoading) {
     return (
       <div className="min-h-screen bg-gradient-to-br from-pink-50 via-purple-50 to-blue-50 flex items-center justify-center">
@@ -511,7 +563,7 @@ const HealingNoteApp = () => {
           <div className="flex items-center gap-3">
             <img src={OTTER_IMAGE} alt="歐特" className="w-12 h-12 object-contain" />
             <div>
-              <h1 className="text-2xl font-medium text-gray-800">HealingNote ❤️</h1>
+              <h1 className="text-2xl font-medium text-gray-800">HealingNote 💙</h1>
               <p className="text-sm text-gray-600">
                 嗨 {user.displayName || user.email || '使用者'} ✨
                 {user.isLineUser && <span className="ml-1 text-xs text-green-600">(LINE 登入)</span>}
@@ -541,7 +593,7 @@ const HealingNoteApp = () => {
                 <div className="text-sm text-gray-600 mt-1">連續天數 🔥</div>
               </div>
               <div className="bg-white/80 backdrop-blur-sm rounded-2xl shadow-md p-4 text-center">
-                <div className="text-3xl font-bold text-blue-600">{getTotalDays(letters)}</div>
+                <div className="text-3xl font-bold text-blue-600">{totalDays}</div>
                 <div className="text-sm text-gray-600 mt-1">記錄天數 📅</div>
               </div>
             </div>
@@ -553,7 +605,7 @@ const HealingNoteApp = () => {
                   <div>
                     <div className="flex items-center gap-2 mb-2">
                       <Heart className="text-purple-600" size={24} />
-                      <h2 className="text-xl font-medium text-gray-800">專屬你的療癒信 💌</h2>
+                      <h2 className="text-xl font-medium text-gray-800">給你的療癒信 💌</h2>
                     </div>
                     <p className="text-sm text-gray-500">
                       📅 {new Date(currentLetter.date).toLocaleDateString('zh-TW', {
@@ -567,13 +619,13 @@ const HealingNoteApp = () => {
                   </div>
                   {currentLetter.emotion && (
                     <span className="px-4 py-2 bg-purple-100 text-purple-700 rounded-full text-sm font-medium">
-                      {emotionEmojis[currentLetter.emotion] || '💬'} {currentLetter.emotion}
+                      {emotionEmojis[currentLetter.emotion] || '💭'} {currentLetter.emotion}
                     </span>
                   )}
                 </div>
 
                 <div className="bg-gradient-to-br from-purple-50 to-pink-50 rounded-2xl p-6 mb-6">
-                  <p className="text-sm text-gray-600 mb-2">💬 你說:</p>
+                  <p className="text-sm text-gray-600 mb-2">💭 你說:</p>
                   <p className="text-gray-700 italic">"{currentLetter.userInput}"</p>
                 </div>
 
@@ -582,6 +634,50 @@ const HealingNoteApp = () => {
                     {currentLetter.letterContent}
                   </p>
                 </div>
+
+                {/* 🔧 第 4 天顯示按鈕 */}
+                {totalDays === 4 && trendAnalyses.length === 0 && (
+                  <div className="mt-6 p-6 bg-gradient-to-r from-blue-50 to-purple-50 rounded-2xl border-2 border-blue-200 animate-fade-in">
+                    <div className="flex items-center gap-2 text-blue-700 mb-3">
+                      <Sparkles size={24} />
+                      <span className="font-medium text-lg">這是你第 4 天的記錄 ✨</span>
+                    </div>
+                    <p className="text-gray-700 mb-4">
+                      累積了 4 天的心情記錄,現在可以為你生成專屬的情緒健康報告,
+                      看看這段時間的變化和成長 💙
+                    </p>
+                    <button
+                      onClick={generateTrend}
+                      disabled={isGenerating}
+                      className="w-full py-3 rounded-2xl bg-gradient-to-r from-blue-500 to-purple-500 text-white font-medium hover:shadow-lg transition-all flex items-center justify-center gap-2"
+                    >
+                      <TrendingUp size={20} />
+                      {isGenerating ? '生成中...' : '為我生成情緒健康報告'}
+                    </button>
+                  </div>
+                )}
+
+                {/* 🔧 之後每 4 天更新 */}
+                {totalDays > 4 && totalDays % 4 === 0 && (
+                  <div className="mt-6 p-6 bg-gradient-to-r from-purple-50 to-pink-50 rounded-2xl border-2 border-purple-200 animate-fade-in">
+                    <div className="flex items-center gap-2 text-purple-700 mb-3">
+                      <TrendingUp size={24} />
+                      <span className="font-medium text-lg">又累積了 4 天記錄 ✨</span>
+                    </div>
+                    <p className="text-gray-700 mb-4">
+                      你已經記錄了 {totalDays} 天了!
+                      想看看最新的心情趨勢變化嗎?
+                    </p>
+                    <button
+                      onClick={generateTrend}
+                      disabled={isGenerating}
+                      className="w-full py-3 rounded-2xl bg-gradient-to-r from-purple-500 to-pink-500 text-white font-medium hover:shadow-lg transition-all flex items-center justify-center gap-2"
+                    >
+                      <TrendingUp size={20} />
+                      {isGenerating ? '生成中...' : '更新我的情緒健康報告'}
+                    </button>
+                  </div>
+                )}
 
                 <button
                   onClick={goHome}
@@ -596,7 +692,7 @@ const HealingNoteApp = () => {
               <div className="bg-white/90 backdrop-blur-sm rounded-3xl shadow-xl p-8 mb-6">
                 <div className="flex items-center gap-2 mb-4">
                   <Sparkles className="text-purple-600" size={24} />
-                  <h2 className="text-xl font-medium text-gray-800">今天想說什麼呢? 😊</h2>
+                  <h2 className="text-xl font-medium text-gray-800">今天想說什麼呢? 💭</h2>
                 </div>
 
                 {dailyCount >= DAILY_LIMIT && (
@@ -614,7 +710,7 @@ const HealingNoteApp = () => {
                     <textarea
                       value={input}
                       onChange={(e) => setInput(e.target.value)}
-                      placeholder="分享你的心情、煩惱、或任何想說的話...&#10;歐特都在這裡傾聽 🫂"
+                      placeholder="分享你的心情、煩惱、或任何想說的話...&#10;歐特都在這裡傾聽 💙"
                       className="w-full h-32 p-4 pr-12 border-2 border-purple-100 rounded-2xl focus:border-purple-300 focus:outline-none resize-none"
                       disabled={isGenerating || dailyCount >= DAILY_LIMIT}
                     />
@@ -655,8 +751,19 @@ const HealingNoteApp = () => {
                   </button>
                 </form>
 
+                {/* 🔧 進度提醒 */}
                 <div className="mt-4 text-center text-xs text-gray-500">
                   <p>💡 剩餘次數: {DAILY_LIMIT - dailyCount} / {DAILY_LIMIT}</p>
+                  {daysUntilReport > 0 && (
+                    <p className="mt-2 text-blue-600 font-medium">
+                      📊 再記錄 {daysUntilReport} 天就能看到你的情緒健康報告囉!
+                    </p>
+                  )}
+                  {canGenerateReport && (
+                    <p className="mt-2 text-green-600 font-medium">
+                      ✨ 你已經可以生成情緒健康報告了!寫完這封後點下方按鈕查看
+                    </p>
+                  )}
                 </div>
               </div>
             )}
@@ -690,26 +797,27 @@ const HealingNoteApp = () => {
                 <p className="text-sm text-gray-600">了解你的情緒變化</p>
               </button>
 
+              {/* 🔧 修正趨勢報告按鈕邏輯 */}
               <button
                 onClick={generateTrend}
-                disabled={isGenerating || letters.length < 3}
+                disabled={isGenerating || !canGenerateReport}
                 className={`rounded-2xl shadow-md p-6 transition-all text-left group ${
-                  isGenerating || letters.length < 3
+                  isGenerating || !canGenerateReport
                     ? 'bg-gray-200 cursor-not-allowed'
                     : 'bg-white/80 backdrop-blur-sm hover:shadow-lg'
                 }`}
               >
                 <TrendingUp 
                   className={`mb-3 group-hover:scale-110 transition-transform ${
-                    letters.length < 3 ? 'text-gray-400' : 'text-indigo-600'
+                    !canGenerateReport ? 'text-gray-400' : 'text-indigo-600'
                   }`} 
                   size={28} 
                 />
-                <h3 className={`font-medium mb-1 ${letters.length < 3 ? 'text-gray-500' : 'text-gray-800'}`}>
-                  趨勢分析 📈
+                <h3 className={`font-medium mb-1 ${!canGenerateReport ? 'text-gray-500' : 'text-gray-800'}`}>
+                  情緒健康報告 📈
                 </h3>
-                <p className={`text-sm ${letters.length < 4 ? 'text-gray-400' : 'text-gray-600'}`}>
-                  {letters.length < 4 ? '需要至少 4 封記錄' : '分析你的心情趨勢'}
+                <p className={`text-sm ${!canGenerateReport ? 'text-gray-400' : 'text-gray-600'}`}>
+                  {!canGenerateReport ? `需要 ${daysUntilReport} 天記錄` : '查看你的心情趨勢'}
                 </p>
               </button>
             </div>
@@ -831,14 +939,18 @@ const HealingNoteApp = () => {
                       </span>
                     )}
                   </div>
-                  <p className="text-gray-600 line-clamp-2">{letter.userInput}</p>
+                  <p className="text-gray-600 mb-2">{letter.userInput}</p>
+                  {/* 🔧 顯示療癒信預覽 */}
+                  <p className="text-gray-500 text-sm italic line-clamp-2">
+                    "{letter.letterContent?.substring(0, 100)}..."
+                  </p>
                 </div>
               ))}
             </div>
           </div>
         )}
 
-        {/* 歷史記錄頁面 */}
+        {/* 🔧 歷史記錄頁面 - 修正顯示療癒信 */}
         {showHistory && (
           <div className="animate-fade-in">
             <div className="space-y-4">
@@ -880,7 +992,18 @@ const HealingNoteApp = () => {
                         </span>
                       )}
                     </div>
-                    <p className="text-gray-600 line-clamp-2">{letter.userInput}</p>
+                    <div className="mb-2">
+                      <p className="text-xs text-gray-500 mb-1">💭 你說:</p>
+                      <p className="text-gray-700 font-medium line-clamp-2">{letter.userInput}</p>
+                    </div>
+                    {/* 🔧 顯示療癒信預覽 */}
+                    <div>
+                      <p className="text-xs text-gray-500 mb-1">💌 歐特說:</p>
+                      <p className="text-gray-600 text-sm italic line-clamp-3">
+                        {letter.letterContent?.substring(0, 150)}...
+                      </p>
+                    </div>
+                    <p className="text-xs text-purple-600 mt-2">點擊查看完整內容 →</p>
                   </div>
                 ))
               )}
@@ -949,7 +1072,7 @@ const HealingNoteApp = () => {
               </button>
               <div className="flex items-center gap-2 text-indigo-600">
                 <TrendingUp size={24} />
-                <span className="font-medium text-xl">心情趨勢分析 📈</span>
+                <span className="font-medium text-xl">情緒健康報告 📈</span>
               </div>
             </div>
             

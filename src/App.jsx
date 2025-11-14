@@ -808,12 +808,18 @@ const HealingNoteApp = () => {
                 <p className="text-sm text-gray-600">了解你的情緒變化</p>
               </button>
 
-              {/* 🔧 修正趨勢報告按鈕邏輯 */}
+              {/* 🔧 修正趨勢報告按鈕邏輯 - 查看報告而非生成 */}
               <button
-                onClick={generateTrend}
-                disabled={isGenerating || !canGenerateReport}
+                onClick={() => {
+                  if (trendAnalyses.length > 0) {
+                    setShowTrend(true);  // 有報告 → 查看報告
+                  } else {
+                    alert(`至少需要 4 天的記錄才能生成情緒健康報告喔 📊\n\n目前記錄了 ${totalDays} 天`);
+                  }
+                }}
+                disabled={!canGenerateReport}
                 className={`rounded-2xl shadow-md p-6 transition-all text-left group ${
-                  isGenerating || !canGenerateReport
+                  !canGenerateReport
                     ? 'bg-gray-200 cursor-not-allowed'
                     : 'bg-white/80 backdrop-blur-sm hover:shadow-lg'
                 }`}

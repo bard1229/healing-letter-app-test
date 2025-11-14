@@ -278,12 +278,12 @@ const HealingNoteApp = () => {
     e.preventDefault();
     
     if (!input.trim()) {
-      alert('請輸入你的心情 💭');
+      alert('請輸入你的心情 📝');
       return;
     }
 
     if (dailyCount >= DAILY_LIMIT) {
-      alert(`免費版每天限制 ${DAILY_LIMIT} 次喔 💙\n\n明天再來記錄吧!`);
+      alert(`免費版每天限制 ${DAILY_LIMIT} 次喔 ✍️\n\n明天再來記錄吧!`);
       return;
     }
 
@@ -411,7 +411,7 @@ const HealingNoteApp = () => {
   };
 
   const shareToSocial = (platform, content) => {
-    const shareText = `我在 HealingNote 記錄了我的心情成長 💙\n\n${content.substring(0, 100)}...\n\n一起來記錄你的心情吧! ✨`;
+    const shareText = `我在 HealingNote 記錄了我的心情成長 ❤️\n\n${content.substring(0, 100)}...\n\n一起來記錄你的心情吧! ✨`;
     
     switch(platform) {
       case 'facebook':
@@ -511,7 +511,7 @@ const HealingNoteApp = () => {
           <div className="flex items-center gap-3">
             <img src={OTTER_IMAGE} alt="歐特" className="w-12 h-12 object-contain" />
             <div>
-              <h1 className="text-2xl font-medium text-gray-800">HealingNote 💙</h1>
+              <h1 className="text-2xl font-medium text-gray-800">HealingNote ❤️</h1>
               <p className="text-sm text-gray-600">
                 嗨 {user.displayName || user.email || '使用者'} ✨
                 {user.isLineUser && <span className="ml-1 text-xs text-green-600">(LINE 登入)</span>}
@@ -553,7 +553,7 @@ const HealingNoteApp = () => {
                   <div>
                     <div className="flex items-center gap-2 mb-2">
                       <Heart className="text-purple-600" size={24} />
-                      <h2 className="text-xl font-medium text-gray-800">給你的療癒信 💌</h2>
+                      <h2 className="text-xl font-medium text-gray-800">專屬你的療癒信 💌</h2>
                     </div>
                     <p className="text-sm text-gray-500">
                       📅 {new Date(currentLetter.date).toLocaleDateString('zh-TW', {
@@ -567,13 +567,13 @@ const HealingNoteApp = () => {
                   </div>
                   {currentLetter.emotion && (
                     <span className="px-4 py-2 bg-purple-100 text-purple-700 rounded-full text-sm font-medium">
-                      {emotionEmojis[currentLetter.emotion] || '💭'} {currentLetter.emotion}
+                      {emotionEmojis[currentLetter.emotion] || '💬'} {currentLetter.emotion}
                     </span>
                   )}
                 </div>
 
                 <div className="bg-gradient-to-br from-purple-50 to-pink-50 rounded-2xl p-6 mb-6">
-                  <p className="text-sm text-gray-600 mb-2">💭 你說:</p>
+                  <p className="text-sm text-gray-600 mb-2">💬 你說:</p>
                   <p className="text-gray-700 italic">"{currentLetter.userInput}"</p>
                 </div>
 
@@ -614,7 +614,7 @@ const HealingNoteApp = () => {
                     <textarea
                       value={input}
                       onChange={(e) => setInput(e.target.value)}
-                      placeholder="分享你的心情、煩惱、或任何想說的話...&#10;歐特都在這裡傾聽 💙"
+                      placeholder="分享你的心情、煩惱、或任何想說的話...&#10;歐特都在這裡傾聽 🫂"
                       className="w-full h-32 p-4 pr-12 border-2 border-purple-100 rounded-2xl focus:border-purple-300 focus:outline-none resize-none"
                       disabled={isGenerating || dailyCount >= DAILY_LIMIT}
                     />
@@ -708,8 +708,8 @@ const HealingNoteApp = () => {
                 <h3 className={`font-medium mb-1 ${letters.length < 3 ? 'text-gray-500' : 'text-gray-800'}`}>
                   趨勢分析 📈
                 </h3>
-                <p className={`text-sm ${letters.length < 3 ? 'text-gray-400' : 'text-gray-600'}`}>
-                  {letters.length < 3 ? '需要至少 3 封記錄' : '分析你的心情趨勢'}
+                <p className={`text-sm ${letters.length < 4 ? 'text-gray-400' : 'text-gray-600'}`}>
+                  {letters.length < 4 ? '需要至少 4 封記錄' : '分析你的心情趨勢'}
                 </p>
               </button>
             </div>

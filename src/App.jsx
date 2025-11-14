@@ -330,8 +330,11 @@ const HealingNoteApp = () => {
       
       // 🔧 清理 Markdown 格式
       const cleanedLetter = letter
-        .replace(/\*\*/g, '')  // 移除 **
-        .replace(/##\s*/g, ''); // 移除 ##
+        .replace(/\*\*/g, '')      // 移除 **
+        .replace(/##\s*/g, '')     // 移除 ##
+        .replace(/#\s*/g, '')      // 移除 #
+        .replace(/---/g, '')       // 移除 ---
+        .trim();
       
       const newLetter = {
         userInput: input,
@@ -429,8 +432,11 @@ const HealingNoteApp = () => {
       
       // 🔧 清理 Markdown 格式
       const cleanedAnalysis = analysis
-        .replace(/\*\*/g, '')
-        .replace(/##\s*/g, '');
+        .replace(/\*\*/g, '')      // 移除 **
+        .replace(/##\s*/g, '')     // 移除 ##
+        .replace(/#\s*/g, '')      // 移除 #
+        .replace(/---/g, '')       // 移除 ---
+        .trim();
       
       const docRef = await addDoc(collection(db, 'trendAnalysis'), {
         userId: user.uid,
@@ -448,6 +454,11 @@ const HealingNoteApp = () => {
 
       setTrendAnalyses([newAnalysis, ...trendAnalyses]);
       setShowTrend(true);
+      
+      // 🔧 生成後立即回到首頁,避免按鈕重複出現
+      setTimeout(() => {
+        setCurrentLetter(null);
+      }, 1000);
       
     } catch (error) {
       console.error('生成趨勢分析失敗:', error);
@@ -649,7 +660,7 @@ const HealingNoteApp = () => {
                     <button
                       onClick={generateTrend}
                       disabled={isGenerating}
-                      className="w-full py-3 rounded-2xl bg-gradient-to-r from-blue-500 to-purple-500 text-white font-medium hover:shadow-lg transition-all flex items-center justify-center gap-2"
+                      className="w-full py-3 rounded-2xl bg-gradient-to-r from-blue-500 to-purple-500 text-white font-medium hover:shadow-lg transition-all flex items-center justify-center gap-2 disabled:opacity-50 disabled:cursor-not-allowed"
                     >
                       <TrendingUp size={20} />
                       {isGenerating ? '生成中...' : '為我生成情緒健康報告'}
@@ -657,8 +668,8 @@ const HealingNoteApp = () => {
                   </div>
                 )}
 
-                {/* 🔧 之後每 4 天更新 */}
-                {totalDays > 4 && totalDays % 4 === 0 && (
+                {/* 🔧 之後每 4 天更新 - 檢查是否為新週期 */}
+                {totalDays > 4 && totalDays % 4 === 0 && trendAnalyses.length > 0 && (
                   <div className="mt-6 p-6 bg-gradient-to-r from-purple-50 to-pink-50 rounded-2xl border-2 border-purple-200 animate-fade-in">
                     <div className="flex items-center gap-2 text-purple-700 mb-3">
                       <TrendingUp size={24} />
@@ -671,7 +682,7 @@ const HealingNoteApp = () => {
                     <button
                       onClick={generateTrend}
                       disabled={isGenerating}
-                      className="w-full py-3 rounded-2xl bg-gradient-to-r from-purple-500 to-pink-500 text-white font-medium hover:shadow-lg transition-all flex items-center justify-center gap-2"
+                      className="w-full py-3 rounded-2xl bg-gradient-to-r from-purple-500 to-pink-500 text-white font-medium hover:shadow-lg transition-all flex items-center justify-center gap-2 disabled:opacity-50 disabled:cursor-not-allowed"
                     >
                       <TrendingUp size={20} />
                       {isGenerating ? '生成中...' : '更新我的情緒健康報告'}

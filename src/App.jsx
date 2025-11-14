@@ -335,7 +335,7 @@ const HealingNoteApp = () => {
       
       const newLetter = {
         userInput: input,
-        letterContent: cleanedLetter,
+        content: cleanedLetter,  // 改用 content
         emotion: emotion,
         date: new Date().toISOString()
       };
@@ -345,7 +345,7 @@ const HealingNoteApp = () => {
       const docRef = await addDoc(collection(db, 'letters'), {
         userId: user.uid,
         userInput: input,
-        letterContent: cleanedLetter,
+        content: cleanedLetter,  // 改用 content
         emotion: emotion,
         createdAt: Timestamp.now()
       });
@@ -631,7 +631,7 @@ const HealingNoteApp = () => {
 
                 <div className="prose prose-lg max-w-none">
                   <p className="text-gray-700 leading-relaxed whitespace-pre-wrap">
-                    {currentLetter.letterContent}
+                    {currentLetter.content}
                   </p>
                 </div>
 
@@ -942,7 +942,7 @@ const HealingNoteApp = () => {
                   <p className="text-gray-600 mb-2">{letter.userInput}</p>
                   {/* 🔧 顯示療癒信預覽 */}
                   <p className="text-gray-500 text-sm italic line-clamp-2">
-                    "{letter.letterContent?.substring(0, 100)}..."
+                    "{letter.content?.substring(0, 100)}..."
                   </p>
                 </div>
               ))}
@@ -1000,7 +1000,7 @@ const HealingNoteApp = () => {
                     <div>
                       <p className="text-xs text-gray-500 mb-1">💌 歐特說:</p>
                       <p className="text-gray-600 text-sm italic line-clamp-3">
-                        {letter.letterContent?.substring(0, 150)}...
+                        {letter.content?.substring(0, 150)}...
                       </p>
                     </div>
                     <p className="text-xs text-purple-600 mt-2">點擊查看完整內容 →</p>

@@ -134,9 +134,27 @@ const HealingNoteApp = () => {
       
       querySnapshot.forEach((doc) => {
         const data = doc.data();
+        
+        // 🔧 清理舊療癒信的格式
+        const cleanedContent = data.content
+          ? data.content
+              .replace(/\[同理段落\]\s*💙/g, '')
+              .replace(/\[分析感受\]\s*💡/g, '')
+              .replace(/\[具體建議\]\s*💡/g, '')
+              .replace(/\[溫暖鼓勵\]\s*✨/g, '')
+              .replace(/\*\*/g, '')
+              .replace(/###\s*/g, '')
+              .replace(/##\s*/g, '')
+              .replace(/#\s*/g, '')
+              .replace(/---/g, '')
+              .replace(/\n{3,}/g, '\n\n')
+              .trim()
+          : data.content;
+        
         loadedLetters.push({
           id: doc.id,
           ...data,
+          content: cleanedContent,  // 使用清理後的內容
           date: data.createdAt?.toDate().toISOString() || new Date().toISOString()
         });
       });
@@ -264,9 +282,27 @@ const HealingNoteApp = () => {
       
       querySnapshot.forEach((doc) => {
         const data = doc.data();
+        
+        // 🔧 清理舊報告的格式 (即使是從 Firestore 讀出來的)
+        const cleanedContent = data.content
+          ? data.content
+              .replace(/\[同理段落\]\s*💙/g, '')
+              .replace(/\[分析感受\]\s*💡/g, '')
+              .replace(/\[具體建議\]\s*💡/g, '')
+              .replace(/\[溫暖鼓勵\]\s*✨/g, '')
+              .replace(/\*\*/g, '')
+              .replace(/###\s*/g, '')
+              .replace(/##\s*/g, '')
+              .replace(/#\s*/g, '')
+              .replace(/---/g, '')
+              .replace(/\n{3,}/g, '\n\n')
+              .trim()
+          : data.content;
+        
         analyses.push({
           id: doc.id,
           ...data,
+          content: cleanedContent,  // 使用清理後的內容
           date: data.createdAt?.toDate().toISOString() || new Date().toISOString()
         });
       });

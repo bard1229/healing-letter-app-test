@@ -1,8 +1,8 @@
 import React, { useState } from 'react';
-import { Heart, Mail, Lock, Sparkles, KeyRound } from 'lucide-react';
+import { Mail, Lock, KeyRound } from 'lucide-react';
 import { signInWithEmailAndPassword, createUserWithEmailAndPassword, sendPasswordResetEmail } from 'firebase/auth';
 import { auth } from './firebase';
-import LineLoginButton from './LineLoginButton';
+import { getLineLoginUrl, generateState, saveState } from './lineAuth';
 
 // 水獺圖片
 const OTTER_IMAGE = '/otter.png';
@@ -15,6 +15,19 @@ const LoginPage = ({ onLoginSuccess }) => {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
   const [successMessage, setSuccessMessage] = useState('');
+
+  // LINE Login 處理
+  const handleLineLogin = () => {
+    try {
+      const state = generateState();
+      saveState(state);
+      const loginUrl = getLineLoginUrl(state);
+      window.location.href = loginUrl;
+    } catch (error) {
+      console.error('LINE Login 初始化失敗:', error);
+      setError('LINE 登入初始化失敗,請稍後再試 😢');
+    }
+  };
 
   const handleSubmit = async (e) => {
     e.preventDefault();
@@ -37,32 +50,34 @@ const LoginPage = ({ onLoginSuccess }) => {
     } catch (error) {
       console.error('認證錯誤:', error);
       
-      let errorMessage = '發生錯誤,請稍後再試 😢';
-      
       switch (error.code) {
-        case 'auth/email-already-in-use':
-          errorMessage = '這個 Email 已經被註冊了 📧';
-          break;
         case 'auth/invalid-email':
-          errorMessage = 'Email 格式不正確 ❌';
-          break;
-        case 'auth/weak-password':
-          errorMessage = '密碼至少需要 6 個字元 🔒';
+          setError('Email 格式不正確 📧');
           break;
         case 'auth/user-not-found':
-          errorMessage = '找不到此帳號,請先註冊 💭';
+          setError('找不到此帳號,請先註冊 🔍');
           break;
         case 'auth/wrong-password':
-          errorMessage = '密碼錯誤 🔑';
+          setError('密碼錯誤,請重試 🔒');
+          break;
+        case 'auth/email-already-in-use':
+          setError('此 Email 已被註冊 ⚠️');
+          break;
+        case 'auth/weak-password':
+          setError('密碼強度不足,至少需要 6 個字元 💪');
           break;
         case 'auth/invalid-credential':
-          errorMessage = 'Email 或密碼錯誤 ⚠️';
+          setError('帳號或密碼錯誤 🔐');
+          break;
+        case 'auth/network-request-failed':
+          setError('網路連線失敗,請檢查網路 📡');
+          break;
+        case 'auth/too-many-requests':
+          setError('登入嘗試次數過多,請稍後再試 ⏰');
           break;
         default:
-          errorMessage = error.message;
+          setError('登入失敗,請稍後再試 😢');
       }
-      
-      setError(errorMessage);
     } finally {
       setLoading(false);
     }
@@ -74,299 +89,428 @@ const LoginPage = ({ onLoginSuccess }) => {
     setSuccessMessage('');
     
     if (!email) {
-      setError('請輸入你的 Email 📧');
+      setError('請輸入 Email 📧');
       return;
     }
-
-    console.log('🔄 開始發送重設信件到:', email);
-    console.log('🔄 當前時間:', new Date().toLocaleString('zh-TW'));
 
     setLoading(true);
 
     try {
       await sendPasswordResetEmail(auth, email);
-      console.log('✅ Firebase 回應成功!信件已發送!');
-      console.log('✅ 請檢查以下位置:');
-      console.log('   1. 收件匣');
-      console.log('   2. 垃圾郵件');
-      console.log('   3. 促銷內容');
-      
-      setSuccessMessage(`✅ 密碼重設信件已發送!
-
-請檢查 Email 收件匣 📧
-目標信箱: ${email}
-
-💡 提醒:
-• 檢查垃圾郵件資料夾
-• 可能需要等待 1-2 分鐘
-• 信件來自 noreply@...firebaseapp.com`);
-      
+      setSuccessMessage('✅ 密碼重設信已寄出!請檢查您的 Email 收件匣');
       setTimeout(() => {
         setShowForgotPassword(false);
         setSuccessMessage('');
-      }, 8000);
+      }, 3000);
     } catch (error) {
-      console.error('❌ 發送重設信件失敗!');
-      console.error('❌ 錯誤代碼:', error.code);
-      console.error('❌ 錯誤訊息:', error.message);
-      console.error('❌ 完整錯誤:', error);
-      
-      let errorMessage = '發送失敗,請稍後再試 😢';
+      console.error('密碼重設失敗:', error);
       
       switch (error.code) {
-        case 'auth/user-not-found':
-          errorMessage = '找不到此 Email 的帳號 ❌\n\n請確認:\n• Email 拼寫正確\n• 已經註冊過此帳號';
-          break;
         case 'auth/invalid-email':
-          errorMessage = 'Email 格式不正確 ⚠️\n\n範例: your@email.com';
+          setError('Email 格式不正確 📧');
           break;
-        case 'auth/missing-email':
-          errorMessage = '請輸入 Email ⚠️';
+        case 'auth/user-not-found':
+          setError('找不到此帳號 🔍');
+          break;
+        case 'auth/network-request-failed':
+          setError('網路連線失敗,請檢查網路 📡');
           break;
         case 'auth/too-many-requests':
-          errorMessage = '⚠️ 發送次數過多\n\n請稍後再試 (約 1 小時)';
+          setError('請求次數過多,請稍後再試 ⏰');
           break;
         default:
-          errorMessage = `發送失敗 😢\n\n錯誤: ${error.message}\n\n請截圖此訊息聯絡客服`;
+          setError('密碼重設失敗,請稍後再試 😢');
       }
-      
-      setError(errorMessage);
     } finally {
       setLoading(false);
     }
   };
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-pink-50 via-purple-50 to-blue-50 flex items-center justify-center p-4">
-      <div className="max-w-md w-full">
-        {/* 標題區 */}
-        <div className="text-center mb-8 animate-fade-in">
-          <div className="inline-block mb-4">
-            <img src={OTTER_IMAGE} alt="歐特" className="w-24 h-24 mx-auto object-contain" />
-          </div>
-          <h1 className="text-3xl font-medium text-gray-800 mb-2">
-            HealingNote 療心筆記 💙
+    <div 
+      className="min-h-screen flex items-center justify-center p-4"
+      style={{
+        background: 'linear-gradient(135deg, #FFF9F5 0%, #FBF7F4 50%, #F5EDE7 100%)'
+      }}
+    >
+      <div className="w-full max-w-md">
+        {/* 🦦 水獺圖片 */}
+        <div className="flex justify-center mb-6">
+          <img 
+            src={OTTER_IMAGE} 
+            alt="Otter" 
+            className="w-32 h-32 object-contain animate-float"
+          />
+        </div>
+
+        {/* 標題與 Slogan */}
+        <div className="text-center mb-8">
+          <h1 
+            className="text-3xl font-bold mb-3"
+            style={{ color: '#5A4A42' }}
+          >
+            HealingNote 療心筆記
           </h1>
-          <p className="text-gray-600">
-            在這裡,你可以安心說出心裡的話 ✨
+          <p 
+            className="text-lg leading-relaxed"
+            style={{ color: '#8B7A70' }}
+          >
+            每一個情緒都值得被理解<br />
+            陪你記錄與長期陪伴
           </p>
         </div>
 
-        {/* 忘記密碼表單 */}
-        {showForgotPassword ? (
-          <div className="bg-white/80 backdrop-blur-sm rounded-3xl shadow-xl p-8 animate-fade-in">
-            <div className="flex items-center gap-2 mb-6">
-              <KeyRound className="text-purple-600" size={24} />
-              <h2 className="text-xl font-medium text-gray-800">重設密碼 🔑</h2>
+        {/* 分隔線 */}
+        <div className="flex items-center justify-center mb-6">
+          <div style={{ width: '80px', height: '1px', background: '#E8D4C4' }}></div>
+        </div>
+
+        {/* 簡介卡片 */}
+        <div 
+          className="mb-8 p-6 rounded-3xl shadow-lg"
+          style={{ 
+            background: 'rgba(255, 255, 255, 0.9)',
+            backdropFilter: 'blur(10px)',
+            border: '1px solid rgba(232, 212, 196, 0.3)'
+          }}
+        >
+          <p 
+            className="text-center text-lg font-medium mb-4"
+            style={{ color: '#5A4A42' }}
+          >
+            你的私密情緒日記 📔
+          </p>
+          
+          <p 
+            className="text-sm leading-relaxed mb-4 text-center"
+            style={{ color: '#8B7A70' }}
+          >
+            記錄每一天的心情起伏 🌈<br />
+            不只回應你,更幫你看見情緒變化 💙<br />
+            你的專屬情緒管家 🦦
+          </p>
+
+          <div 
+            className="space-y-3 text-sm"
+            style={{ color: '#8B7A70' }}
+          >
+            <div className="flex items-start gap-2">
+              <span>•</span>
+              <span>專注情緒健康,溫暖細膩的覺察 ✨</span>
             </div>
-
-            <p className="text-gray-600 mb-6 text-sm">
-              輸入你的 Email,我們會發送密碼重設連結給你 📧
-            </p>
-
-            <form onSubmit={handleForgotPassword} className="space-y-4">
-              <div>
-                <label className="block text-sm font-medium text-gray-700 mb-2">
-                  Email 📧
-                </label>
-                <div className="relative">
-                  <Mail className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400" size={20} />
-                  <input
-                    type="email"
-                    value={email}
-                    onChange={(e) => setEmail(e.target.value)}
-                    placeholder="your@email.com"
-                    required
-                    className="w-full pl-10 pr-4 py-3 border-2 border-purple-100 rounded-2xl focus:border-purple-300 focus:outline-none"
-                  />
-                </div>
-              </div>
-
-              {successMessage && (
-                <div className="bg-green-50 border border-green-200 rounded-2xl p-3 text-green-700 text-sm whitespace-pre-line">
-                  {successMessage}
-                </div>
-              )}
-
-              {error && (
-                <div className="bg-red-50 border border-red-200 rounded-2xl p-3 text-red-600 text-sm whitespace-pre-line">
-                  {error}
-                </div>
-              )}
-
-              <div className="flex gap-3">
-                <button
-                  type="button"
-                  onClick={() => { setShowForgotPassword(false); setError(''); setSuccessMessage(''); }}
-                  className="flex-1 py-3 rounded-2xl bg-gray-100 text-gray-700 hover:bg-gray-200 font-medium transition-all"
-                >
-                  取消
-                </button>
-                <button
-                  type="submit"
-                  disabled={loading}
-                  className={`flex-1 py-3 rounded-2xl font-medium transition-all flex items-center justify-center gap-2 ${
-                    loading
-                      ? 'bg-gray-300 text-gray-500'
-                      : 'bg-gradient-to-r from-purple-500 to-pink-500 text-white hover:shadow-lg'
-                  }`}
-                >
-                  {loading ? (
-                    <>
-                      <div className="w-5 h-5 border-2 border-white border-t-transparent rounded-full animate-spin" />
-                      發送中...
-                    </>
-                  ) : (
-                    <>
-                      <Mail size={20} />
-                      發送重設信件
-                    </>
-                  )}
-                </button>
-              </div>
-            </form>
+            <div className="flex items-start gap-2">
+              <span>•</span>
+              <span>保存記錄,追蹤心情變化 📊</span>
+            </div>
+            <div className="flex items-start gap-2">
+              <span>•</span>
+              <span>智能趨勢分析,陪你看見成長 🌱</span>
+            </div>
           </div>
-        ) : (
-          /* 登入/註冊表單 */
-          <div className="bg-white/80 backdrop-blur-sm rounded-3xl shadow-xl p-8">
-            <div className="flex gap-4 mb-6">
-              <button
-                onClick={() => { setIsSignUp(false); setError(''); setSuccessMessage(''); }}
-                className={`flex-1 py-2 rounded-full font-medium transition-all ${
-                  !isSignUp
-                    ? 'bg-gradient-to-r from-purple-500 to-pink-500 text-white'
-                    : 'bg-gray-100 text-gray-600 hover:bg-gray-200'
-                }`}
-              >
-                登入 🔓
-              </button>
-              <button
-                onClick={() => { setIsSignUp(true); setError(''); setSuccessMessage(''); }}
-                className={`flex-1 py-2 rounded-full font-medium transition-all ${
-                  isSignUp
-                    ? 'bg-gradient-to-r from-purple-500 to-pink-500 text-white'
-                    : 'bg-gray-100 text-gray-600 hover:bg-gray-200'
-                }`}
-              >
-                註冊 ✨
-              </button>
-            </div>
+        </div>
 
-            {/* LINE Login 按鈕 */}
-            <div className="mb-6">
-              <LineLoginButton onError={setError} />
-            </div>
+        {/* 分隔線 */}
+        <div className="flex items-center justify-center mb-6">
+          <div style={{ width: '80px', height: '1px', background: '#E8D4C4' }}></div>
+        </div>
 
-            {/* 分隔線 */}
-            <div className="relative mb-6">
-              <div className="absolute inset-0 flex items-center">
-                <div className="w-full border-t border-gray-200"></div>
-              </div>
-              <div className="relative flex justify-center text-sm">
-                <span className="px-4 bg-white/80 text-gray-500">或使用 Email 登入</span>
-              </div>
-            </div>
+        {/* 登入/註冊表單 */}
+        {!showForgotPassword ? (
+          <div 
+            className="p-8 rounded-3xl shadow-xl"
+            style={{ 
+              background: 'rgba(255, 255, 255, 0.95)',
+              backdropFilter: 'blur(10px)',
+              border: '1px solid rgba(232, 212, 196, 0.3)'
+            }}
+          >
+            <h2 
+              className="text-xl font-medium text-center mb-6"
+              style={{ color: '#5A4A42' }}
+            >
+              {isSignUp ? '註冊新帳號 ✨' : '歡迎回來 💙'}
+            </h2>
 
             <form onSubmit={handleSubmit} className="space-y-4">
               <div>
-                <label className="block text-sm font-medium text-gray-700 mb-2">
-                  Email 📧
-                </label>
                 <div className="relative">
-                  <Mail className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400" size={20} />
+                  <Mail 
+                    className="absolute left-4 top-1/2 -translate-y-1/2" 
+                    size={20}
+                    style={{ color: '#A87D5F' }}
+                  />
                   <input
                     type="email"
+                    placeholder="Email"
                     value={email}
                     onChange={(e) => setEmail(e.target.value)}
-                    placeholder="your@email.com"
+                    className="w-full pl-12 pr-4 py-3 rounded-2xl focus:outline-none transition-all"
+                    style={{ 
+                      background: '#FBF7F4',
+                      border: '2px solid #E8D4C4',
+                      color: '#5A4A42'
+                    }}
+                    onFocus={(e) => e.target.style.borderColor = '#C9A386'}
+                    onBlur={(e) => e.target.style.borderColor = '#E8D4C4'}
                     required
-                    className="w-full pl-10 pr-4 py-3 border-2 border-purple-100 rounded-2xl focus:border-purple-300 focus:outline-none"
                   />
                 </div>
               </div>
 
               <div>
-                <div className="flex justify-between items-center mb-2">
-                  <label className="block text-sm font-medium text-gray-700">
-                    密碼 🔒
-                  </label>
-                  {!isSignUp && (
-                    <button
-                      type="button"
-                      onClick={() => setShowForgotPassword(true)}
-                      className="text-sm text-purple-600 hover:text-purple-700 transition-colors"
-                    >
-                      忘記密碼? 🔑
-                    </button>
-                  )}
-                </div>
                 <div className="relative">
-                  <Lock className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400" size={20} />
+                  <Lock 
+                    className="absolute left-4 top-1/2 -translate-y-1/2" 
+                    size={20}
+                    style={{ color: '#A87D5F' }}
+                  />
                   <input
                     type="password"
+                    placeholder="密碼"
                     value={password}
                     onChange={(e) => setPassword(e.target.value)}
-                    placeholder="至少 6 個字元"
+                    className="w-full pl-12 pr-4 py-3 rounded-2xl focus:outline-none transition-all"
+                    style={{ 
+                      background: '#FBF7F4',
+                      border: '2px solid #E8D4C4',
+                      color: '#5A4A42'
+                    }}
+                    onFocus={(e) => e.target.style.borderColor = '#C9A386'}
+                    onBlur={(e) => e.target.style.borderColor = '#E8D4C4'}
                     required
-                    minLength={6}
-                    className="w-full pl-10 pr-4 py-3 border-2 border-purple-100 rounded-2xl focus:border-purple-300 focus:outline-none"
                   />
                 </div>
               </div>
 
               {error && (
-                <div className="bg-red-50 border border-red-200 rounded-2xl p-3 text-red-600 text-sm whitespace-pre-line">
+                <div 
+                  className="p-3 rounded-xl text-sm text-center"
+                  style={{ 
+                    background: '#FFF5F5',
+                    color: '#C53030',
+                    border: '1px solid #FED7D7'
+                  }}
+                >
                   {error}
+                </div>
+              )}
+
+              {successMessage && (
+                <div 
+                  className="p-3 rounded-xl text-sm text-center"
+                  style={{ 
+                    background: '#F0FFF4',
+                    color: '#22543D',
+                    border: '1px solid #C6F6D5'
+                  }}
+                >
+                  {successMessage}
                 </div>
               )}
 
               <button
                 type="submit"
                 disabled={loading}
-                className={`w-full py-3 rounded-2xl font-medium transition-all flex items-center justify-center gap-2 ${
-                  loading
-                    ? 'bg-gray-300 text-gray-500'
-                    : 'bg-gradient-to-r from-purple-500 to-pink-500 text-white hover:shadow-lg'
-                }`}
+                className="w-full py-3 rounded-2xl font-medium text-white transition-all shadow-md hover:shadow-lg disabled:opacity-50 disabled:cursor-not-allowed"
+                style={{
+                  background: 'linear-gradient(to right, #C9A386, #D4A373)',
+                  boxShadow: '0 4px 6px rgba(169, 131, 102, 0.2)'
+                }}
+                onMouseEnter={(e) => {
+                  if (!loading) {
+                    e.target.style.transform = 'translateY(-2px)';
+                    e.target.style.boxShadow = '0 6px 12px rgba(169, 131, 102, 0.3)';
+                  }
+                }}
+                onMouseLeave={(e) => {
+                  e.target.style.transform = 'translateY(0)';
+                  e.target.style.boxShadow = '0 4px 6px rgba(169, 131, 102, 0.2)';
+                }}
               >
-                {loading ? (
-                  <>
-                    <div className="w-5 h-5 border-2 border-white border-t-transparent rounded-full animate-spin" />
-                    處理中...
-                  </>
-                ) : (
-                  <>
-                    <Sparkles size={20} />
-                    {isSignUp ? '註冊帳號 ✨' : '登入 💙'}
-                  </>
-                )}
+                {loading ? '處理中...' : (isSignUp ? '註冊 💌' : '登入 💌')}
+              </button>
+
+              {/* LINE Login */}
+              <div className="relative flex items-center justify-center my-4">
+                <div style={{ flex: 1, height: '1px', background: '#E8D4C4' }}></div>
+                <span className="px-4 text-xs" style={{ color: '#A89B93' }}>或</span>
+                <div style={{ flex: 1, height: '1px', background: '#E8D4C4' }}></div>
+              </div>
+
+              <button
+                type="button"
+                onClick={handleLineLogin}
+                className="w-full py-3 rounded-2xl font-medium transition-all flex items-center justify-center gap-2 shadow-sm hover:shadow-md"
+                style={{
+                  background: '#06C755',
+                  color: 'white'
+                }}
+                onMouseEnter={(e) => {
+                  e.target.style.transform = 'translateY(-2px)';
+                }}
+                onMouseLeave={(e) => {
+                  e.target.style.transform = 'translateY(0)';
+                }}
+              >
+                <span className="text-xl">🟢</span>
+                使用 LINE 登入
               </button>
             </form>
 
-            <p className="text-center text-sm text-gray-500 mt-6">
-              {isSignUp ? (
-                <>註冊後,你的所有記錄都會安全地儲存在雲端 ☁️</>
-              ) : (
-                <>還沒有帳號嗎?點上方「註冊」建立新帳號 ✨</>
+            <div className="mt-6 text-center space-y-2">
+              <button
+                onClick={() => {
+                  setIsSignUp(!isSignUp);
+                  setError('');
+                  setSuccessMessage('');
+                }}
+                className="text-sm transition-colors"
+                style={{ color: '#A87D5F' }}
+                onMouseEnter={(e) => e.target.style.color = '#C9A386'}
+                onMouseLeave={(e) => e.target.style.color = '#A87D5F'}
+              >
+                {isSignUp ? '已有帳號? 立即登入' : '還沒有帳號? 立即註冊'}
+              </button>
+
+              {!isSignUp && (
+                <>
+                  <br />
+                  <button
+                    onClick={() => {
+                      setShowForgotPassword(true);
+                      setError('');
+                      setSuccessMessage('');
+                    }}
+                    className="text-sm transition-colors"
+                    style={{ color: '#A87D5F' }}
+                    onMouseEnter={(e) => e.target.style.color = '#C9A386'}
+                    onMouseLeave={(e) => e.target.style.color = '#A87D5F'}
+                  >
+                    <KeyRound size={14} className="inline mr-1" />
+                    忘記密碼?
+                  </button>
+                </>
               )}
-            </p>
+            </div>
+          </div>
+        ) : (
+          /* 忘記密碼表單 */
+          <div 
+            className="p-8 rounded-3xl shadow-xl"
+            style={{ 
+              background: 'rgba(255, 255, 255, 0.95)',
+              backdropFilter: 'blur(10px)',
+              border: '1px solid rgba(232, 212, 196, 0.3)'
+            }}
+          >
+            <h2 
+              className="text-xl font-medium text-center mb-6"
+              style={{ color: '#5A4A42' }}
+            >
+              重設密碼 🔐
+            </h2>
+
+            <form onSubmit={handleForgotPassword} className="space-y-4">
+              <div>
+                <div className="relative">
+                  <Mail 
+                    className="absolute left-4 top-1/2 -translate-y-1/2" 
+                    size={20}
+                    style={{ color: '#A87D5F' }}
+                  />
+                  <input
+                    type="email"
+                    placeholder="輸入您的 Email"
+                    value={email}
+                    onChange={(e) => setEmail(e.target.value)}
+                    className="w-full pl-12 pr-4 py-3 rounded-2xl focus:outline-none transition-all"
+                    style={{ 
+                      background: '#FBF7F4',
+                      border: '2px solid #E8D4C4',
+                      color: '#5A4A42'
+                    }}
+                    onFocus={(e) => e.target.style.borderColor = '#C9A386'}
+                    onBlur={(e) => e.target.style.borderColor = '#E8D4C4'}
+                    required
+                  />
+                </div>
+              </div>
+
+              {error && (
+                <div 
+                  className="p-3 rounded-xl text-sm text-center"
+                  style={{ 
+                    background: '#FFF5F5',
+                    color: '#C53030',
+                    border: '1px solid #FED7D7'
+                  }}
+                >
+                  {error}
+                </div>
+              )}
+
+              {successMessage && (
+                <div 
+                  className="p-3 rounded-xl text-sm text-center"
+                  style={{ 
+                    background: '#F0FFF4',
+                    color: '#22543D',
+                    border: '1px solid #C6F6D5'
+                  }}
+                >
+                  {successMessage}
+                </div>
+              )}
+
+              <button
+                type="submit"
+                disabled={loading}
+                className="w-full py-3 rounded-2xl font-medium text-white transition-all shadow-md hover:shadow-lg disabled:opacity-50 disabled:cursor-not-allowed"
+                style={{
+                  background: 'linear-gradient(to right, #C9A386, #D4A373)',
+                  boxShadow: '0 4px 6px rgba(169, 131, 102, 0.2)'
+                }}
+                onMouseEnter={(e) => {
+                  if (!loading) {
+                    e.target.style.transform = 'translateY(-2px)';
+                    e.target.style.boxShadow = '0 6px 12px rgba(169, 131, 102, 0.3)';
+                  }
+                }}
+                onMouseLeave={(e) => {
+                  e.target.style.transform = 'translateY(0)';
+                  e.target.style.boxShadow = '0 4px 6px rgba(169, 131, 102, 0.2)';
+                }}
+              >
+                {loading ? '發送中...' : '發送重設信 📧'}
+              </button>
+            </form>
+
+            <div className="mt-6 text-center">
+              <button
+                onClick={() => {
+                  setShowForgotPassword(false);
+                  setError('');
+                  setSuccessMessage('');
+                }}
+                className="text-sm transition-colors"
+                style={{ color: '#A87D5F' }}
+                onMouseEnter={(e) => e.target.style.color = '#C9A386'}
+                onMouseLeave={(e) => e.target.style.color = '#A87D5F'}
+              >
+                ← 返回登入
+              </button>
+            </div>
           </div>
         )}
-
-        {/* 底部說明 */}
-        <div className="text-center mt-6 text-sm text-gray-500">
-          <p>🔒 你的隱私很重要</p>
-          <p>所有記錄內容都僅限你本人查看 💙</p>
-        </div>
       </div>
 
       <style jsx>{`
-        @keyframes fade-in {
-          from { opacity: 0; transform: translateY(10px); }
-          to { opacity: 1; transform: translateY(0); }
+        @keyframes float {
+          0%, 100% { transform: translateY(0px); }
+          50% { transform: translateY(-10px); }
         }
-        .animate-fade-in {
-          animation: fade-in 0.5s ease-out;
+        .animate-float {
+          animation: float 3s ease-in-out infinite;
         }
       `}</style>
     </div>

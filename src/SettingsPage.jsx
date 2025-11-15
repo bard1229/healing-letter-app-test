@@ -1,7 +1,7 @@
 import React, { useState } from 'react';
 import { ArrowLeft, User, Save, Mail } from 'lucide-react';
 import { updateProfile } from 'firebase/auth';
-import { doc, updateDoc } from 'firebase/firestore';
+import { doc, setDoc } from 'firebase/firestore';
 import { auth, db } from './firebase';
 
 const SettingsPage = ({ user, onBack, onUpdate }) => {
@@ -31,12 +31,14 @@ const SettingsPage = ({ user, onBack, onUpdate }) => {
         localStorage.setItem('lineUserName', displayName.trim());
       }
 
-      // 更新 Firestore 的使用者資料
+      // 更新 Firestore 的使用者資料 (使用 setDoc + merge,不存在會自動創建)
       const userRef = doc(db, 'users', user.uid);
-      await updateDoc(userRef, {
+      await setDoc(userRef, {
         displayName: displayName.trim(),
+        email: user.email || '',
+        isLineUser: user.isLineUser || false,
         updatedAt: new Date()
-      });
+      }, { merge: true });  // merge: true 表示不存在就創建,存在就更新
 
       setMessage('✅ 儲存成功!');
       

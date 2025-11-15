@@ -32,11 +32,12 @@
 // ========================================
 
 import React, { useState, useEffect } from 'react';
-import { Heart, Mic, Send, Clock, TrendingUp, Mail, Sparkles, Home, ArrowLeft, LogOut, Calendar, BarChart3, ChevronLeft, ChevronRight, AlertCircle, Share2, Facebook, Twitter, Instagram } from 'lucide-react';
+import { Heart, Mic, Send, Clock, TrendingUp, Mail, Sparkles, Home, ArrowLeft, LogOut, Calendar, BarChart3, ChevronLeft, ChevronRight, AlertCircle, Share2, Facebook, Twitter, Instagram, Settings } from 'lucide-react';
 import { onAuthStateChanged, signOut } from 'firebase/auth';
 import { collection, addDoc, query, where, getDocs, orderBy, Timestamp } from 'firebase/firestore';
 import { auth, db } from './firebase';
 import LoginPage from './LoginPage';
+import SettingsPage from './SettingsPage';
 import { generateHealingLetter, generateTrendAnalysis, analyzeEmotion } from './geminiService';
 
 // 水獺圖片
@@ -55,6 +56,7 @@ const HealingNoteApp = () => {
   const [showStats, setShowStats] = useState(false);
   const [showCalendar, setShowCalendar] = useState(false);
   const [showDayDetail, setShowDayDetail] = useState(false);
+  const [showSettings, setShowSettings] = useState(false);
   const [selectedDayLetters, setSelectedDayLetters] = useState([]);
   const [trendAnalyses, setTrendAnalyses] = useState([]);
   const [loading, setLoading] = useState(false);
@@ -456,6 +458,7 @@ const HealingNoteApp = () => {
     setShowStats(false);
     setShowCalendar(false);
     setShowDayDetail(false);
+    setShowSettings(false);
   };
 
   // 🔧 生成趨勢報告 (修正邏輯)
@@ -629,17 +632,26 @@ const HealingNoteApp = () => {
               </p>
             </div>
           </div>
-          <button
-            onClick={handleLogout}
-            className="flex items-center gap-2 px-4 py-2 rounded-xl bg-white/80 backdrop-blur-sm text-gray-600 hover:text-gray-800 hover:bg-white transition-all shadow-sm"
-          >
-            <LogOut size={18} />
-            <span className="text-sm">登出</span>
-          </button>
+          <div className="flex items-center gap-2">
+            <button
+              onClick={() => setShowSettings(true)}
+              className="flex items-center gap-2 px-4 py-2 rounded-xl bg-white/80 backdrop-blur-sm text-gray-600 hover:text-gray-800 hover:bg-white transition-all shadow-sm"
+            >
+              <Settings size={18} />
+              <span className="text-sm">設定</span>
+            </button>
+            <button
+              onClick={handleLogout}
+              className="flex items-center gap-2 px-4 py-2 rounded-xl bg-white/80 backdrop-blur-sm text-gray-600 hover:text-gray-800 hover:bg-white transition-all shadow-sm"
+            >
+              <LogOut size={18} />
+              <span className="text-sm">登出</span>
+            </button>
+          </div>
         </div>
 
         {/* 主要內容區 */}
-        {!showHistory && !showTrend && !showStats && !showCalendar && (
+        {!showHistory && !showTrend && !showStats && !showCalendar && !showSettings && (
           <>
             {/* 統計卡片 */}
             <div className="grid grid-cols-3 gap-4 mb-6">
@@ -1271,6 +1283,24 @@ const HealingNoteApp = () => {
               ))}
             </div>
           </div>
+        )}
+
+        {/* 設定頁面 */}
+        {showSettings && (
+          <SettingsPage
+            user={user}
+            onBack={() => setShowSettings(false)}
+            onUpdate={() => {
+              // 重新載入使用者資料
+              if (user.isLineUser) {
+                const newName = localStorage.getItem('lineUserName');
+                setUser({ ...user, displayName: newName });
+              } else {
+                // Firebase Auth 使用者會自動更新
+                setUser({ ...user, displayName: auth.currentUser?.displayName });
+              }
+            }}
+          />
         )}
       </div>
 

@@ -65,6 +65,7 @@ const HealingNoteApp = () => {
   const [calendarDate, setCalendarDate] = useState(new Date());
   const [selectedEmotion, setSelectedEmotion] = useState('');
   const [showEmotionSelector, setShowEmotionSelector] = useState(false);
+  const [searchKeyword, setSearchKeyword] = useState('');
 
   // 免費版每日限制
   const DAILY_LIMIT = 2;
@@ -475,6 +476,36 @@ const HealingNoteApp = () => {
     recognition.start();
   };
 
+  // 🔍 搜尋過濾函數
+  const getFilteredLetters = () => {
+    if (!searchKeyword.trim()) {
+      return letters;
+    }
+    
+    const keyword = searchKeyword.toLowerCase();
+    return letters.filter(letter => 
+      letter.input?.toLowerCase().includes(keyword) ||
+      letter.content?.toLowerCase().includes(keyword) ||
+      letter.emotion?.toLowerCase().includes(keyword)
+    );
+  };
+
+  // 🎨 高亮搜尋關鍵字
+  const highlightKeyword = (text) => {
+    if (!searchKeyword.trim() || !text) return text;
+    
+    const regex = new RegExp(`(${searchKeyword})`, 'gi');
+    const parts = text.split(regex);
+    
+    return parts.map((part, index) => 
+      regex.test(part) ? (
+        <mark key={index} className="bg-yellow-200 px-1 rounded">{part}</mark>
+      ) : (
+        part
+      )
+    );
+  };
+
   const goHome = () => {
     setCurrentLetter(null);
     setShowHistory(false);
@@ -483,6 +514,7 @@ const HealingNoteApp = () => {
     setShowCalendar(false);
     setShowDayDetail(false);
     setShowSettings(false);
+    setSearchKeyword('');  // 清除搜尋
   };
 
   // 🔧 生成趨勢報告 (修正邏輯)
@@ -1176,13 +1208,49 @@ const HealingNoteApp = () => {
                 </button>
                 <h2 className="text-2xl font-medium text-gray-800">歷史記錄 📚</h2>
               </div>
-              {letters.length === 0 ? (
+
+              {/* 🔍 搜尋框 */}
+              <div className="mb-6">
+                <div className="relative">
+                  <input
+                    type="text"
+                    value={searchKeyword}
+                    onChange={(e) => setSearchKeyword(e.target.value)}
+                    placeholder="搜尋心情內容、情緒或療癒信... 🔍"
+                    className="w-full p-4 pr-12 border-2 border-purple-100 rounded-2xl focus:border-purple-300 focus:outline-none bg-white/80 backdrop-blur-sm"
+                  />
+                  {searchKeyword && (
+                    <button
+                      onClick={() => setSearchKeyword('')}
+                      className="absolute right-4 top-1/2 -translate-y-1/2 text-gray-400 hover:text-gray-600 transition-colors"
+                    >
+                      ✕
+                    </button>
+                  )}
+                </div>
+                {searchKeyword && (
+                  <p className="text-xs text-gray-500 mt-2">
+                    找到 {getFilteredLetters().length} 筆結果
+                  </p>
+                )}
+              </div>
+
+              {getFilteredLetters().length === 0 ? (
                 <div className="text-center py-12 text-gray-500">
-                  還沒有任何記錄喔 💭<br />
-                  開始記錄你的第一個心情吧! ✨
+                  {searchKeyword ? (
+                    <>
+                      找不到包含「{searchKeyword}」的記錄 😢<br />
+                      試試其他關鍵字吧!
+                    </>
+                  ) : (
+                    <>
+                      還沒有任何記錄喔 💭<br />
+                      開始記錄你的第一個心情吧! ✨
+                    </>
+                  )}
                 </div>
               ) : (
-                letters.slice().reverse().map((letter) => (
+                getFilteredLetters().slice().reverse().map((letter) => (
                   <div
                     key={letter.id}
                     className="bg-white/80 backdrop-blur-sm rounded-2xl shadow-md p-6 hover:shadow-lg transition-all cursor-pointer"
@@ -1207,13 +1275,15 @@ const HealingNoteApp = () => {
                     </div>
                     <div className="mb-2">
                       <p className="text-xs text-gray-500 mb-1">💭 你說:</p>
-                      <p className="text-gray-700 font-medium line-clamp-2">{letter.userInput}</p>
+                      <p className="text-gray-700 font-medium line-clamp-2">
+                        {highlightKeyword(letter.userInput)}
+                      </p>
                     </div>
                     {/* 🔧 顯示療癒信預覽 */}
                     <div>
                       <p className="text-xs text-gray-500 mb-1">💌 歐特說:</p>
                       <p className="text-gray-600 text-sm italic line-clamp-3">
-                        {letter.content?.substring(0, 150)}...
+                        {highlightKeyword(letter.content?.substring(0, 150))}...
                       </p>
                     </div>
                     <p className="text-xs text-purple-600 mt-2">點擊查看完整內容 →</p>

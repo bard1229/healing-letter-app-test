@@ -48,12 +48,25 @@ const HealingNoteApp = () => {
   const [authLoading, setAuthLoading] = useState(true);
   const [input, setInput] = useState('');
   const [isListening, setIsListening] = useState(false);
-// 🎨 奶茶暖色系 CSS - 加強版
+// 🎨 奶茶暖色系 CSS - 最終完整版
 const teaWarmStyles = `
-  /* 主要漸層 */
+  /* 主要漸層 - 深色按鈕 */
   .bg-gradient-to-r.from-purple-500.to-pink-500,
   .bg-gradient-to-br.from-purple-500.to-pink-500 {
     background: linear-gradient(to right, #C9A386, #D4A373) !important;
+  }
+  
+  /* 淺色漸層背景 - "你說:" 區塊 */
+  .bg-gradient-to-br.from-purple-50.to-pink-50,
+  .bg-gradient-to-r.from-purple-50.to-pink-50,
+  div.bg-gradient-to-br.from-purple-50.to-pink-50 {
+    background: linear-gradient(to bottom right, #FBF7F4, #FFF9F5) !important;
+  }
+  
+  /* 其他淺色漸層 */
+  .from-blue-50.to-purple-50,
+  .bg-gradient-to-r.from-blue-50.to-purple-50 {
+    background: linear-gradient(to right, #EFF6FF, #FBF7F4) !important;
   }
   
   /* 紫色背景 - 加強優先級 */

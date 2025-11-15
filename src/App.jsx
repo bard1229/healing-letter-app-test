@@ -810,23 +810,68 @@ const HealingNoteApp = () => {
                   </button>
                 </form>
 
-                {/* 🔧 進度提醒 */}
-<div className="mt-4 text-center text-xs text-gray-500">
-                  <p>💡 剩餘次數: {DAILY_LIMIT - dailyCount} / {DAILY_LIMIT}</p>
-                  {daysUntilReport > 0 && (
-                    <p className="mt-2 text-blue-600 font-medium">
-                      📊 還差 {daysUntilReport} 天記錄就能生成情緒健康報告囉!(已記錄 {totalDays} 天)
+                {/* 🔧 加強版進度提醒 */}
+                <div className="mt-4 space-y-3">
+                  {/* 剩餘次數 */}
+                  <div className="text-center text-xs text-gray-500">
+                    <p>💡 今日剩餘次數: {DAILY_LIMIT - dailyCount} / {DAILY_LIMIT}</p>
+                  </div>
+
+                  {/* 記錄統計 */}
+                  <div className="flex items-center justify-center gap-6 text-xs">
+                    <div className="flex items-center gap-1">
+                      <span className="text-gray-500">📅 記錄天數:</span>
+                      <span className={`font-bold ${totalDays >= 4 ? 'text-green-600' : 'text-blue-600'}`}>
+                        {totalDays}/4 天
+                      </span>
+                      {totalDays >= 4 && <span className="text-green-600">✓</span>}
+                    </div>
+                    <div className="flex items-center gap-1">
+                      <span className="text-gray-500">🔥 連續記錄:</span>
+                      <span className="font-bold text-orange-600">
+                        {checkConsecutiveDays(letters)} 天
+                      </span>
+                    </div>
+                  </div>
+
+                  {/* 進度條 */}
+                  <div className="px-2">
+                    <div className="w-full bg-gray-200 rounded-full h-2.5 overflow-hidden">
+                      <div
+                        className={`h-2.5 rounded-full transition-all duration-500 ${
+                          totalDays >= 4 
+                            ? 'bg-gradient-to-r from-green-500 to-emerald-500' 
+                            : 'bg-gradient-to-r from-blue-500 to-purple-500'
+                        }`}
+                        style={{ width: `${Math.min((totalDays / 4) * 100, 100)}%` }}
+                      />
+                    </div>
+                    <p className="text-center text-xs text-gray-400 mt-1">
+                      {totalDays >= 4 ? '已達成目標! 🎉' : `進度 ${Math.round((totalDays / 4) * 100)}%`}
                     </p>
+                  </div>
+
+                  {/* 狀態提示 */}
+                  {daysUntilReport > 0 && (
+                    <div className="text-center p-2 bg-blue-50 rounded-xl">
+                      <p className="text-xs text-blue-700 font-medium">
+                        📊 再記錄 {daysUntilReport} 天就能生成情緒健康報告!
+                      </p>
+                    </div>
                   )}
                   {canGenerateReport && trendAnalyses.length === 0 && (
-                    <p className="mt-2 text-green-600 font-medium">
-                      ✨ 已達 4 天記錄!寫完這封後點下方按鈕查看報告
-                    </p>
+                    <div className="text-center p-2 bg-green-50 rounded-xl">
+                      <p className="text-xs text-green-700 font-medium">
+                        ✨ 太棒了!已達 4 天記錄!寫完這封後可生成報告
+                      </p>
+                    </div>
                   )}
                   {canGenerateReport && trendAnalyses.length > 0 && (
-                    <p className="mt-2 text-purple-600 font-medium">
-                      💜 已有情緒健康報告!點下方按鈕查看
-                    </p>
+                    <div className="text-center p-2 bg-purple-50 rounded-xl">
+                      <p className="text-xs text-purple-700 font-medium">
+                        💜 已有情緒健康報告!點下方按鈕查看
+                      </p>
+                    </div>
                   )}
                 </div>
               </div>

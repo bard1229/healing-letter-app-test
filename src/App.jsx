@@ -63,6 +63,8 @@ const HealingNoteApp = () => {
   const [dailyCount, setDailyCount] = useState(0);
   const [emotionStats, setEmotionStats] = useState({});
   const [calendarDate, setCalendarDate] = useState(new Date());
+  const [selectedEmotion, setSelectedEmotion] = useState('');
+  const [showEmotionSelector, setShowEmotionSelector] = useState(false);
 
   // 免費版每日限制
   const DAILY_LIMIT = 2;
@@ -76,6 +78,19 @@ const HealingNoteApp = () => {
     '開心': '😊',
     '平靜': '😌'
   };
+
+  // 🎨 情緒選擇器選項
+  const emotionOptions = [
+    { emoji: '😊', label: '開心', value: '開心' },
+    { emoji: '😢', label: '難過', value: '難過' },
+    { emoji: '😰', label: '壓力', value: '壓力' },
+    { emoji: '😤', label: '生氣', value: '生氣' },
+    { emoji: '🤔', label: '迷茫', value: '迷茫' },
+    { emoji: '😌', label: '平靜', value: '平靜' },
+    { emoji: '😴', label: '疲憊', value: '疲憊' },
+    { emoji: '🥰', label: '感動', value: '感動' },
+    { emoji: '😎', label: '自信', value: '自信' }
+  ];
 
   // 🔧 修改後的登入檢查 - 同時支援 Firebase Auth 和 LINE 登入
   useEffect(() => {
@@ -361,8 +376,15 @@ const HealingNoteApp = () => {
     setIsGenerating(true);
 
     try {
-      const emotion = await analyzeEmotion(input);
-      console.log('偵測到的情緒:', emotion);
+      // 🎨 使用選擇的情緒或 AI 判斷
+      let emotion;
+      if (selectedEmotion) {
+        emotion = selectedEmotion;
+        console.log('使用者選擇的情緒:', emotion);
+      } else {
+        emotion = await analyzeEmotion(input);
+        console.log('AI 判斷的情緒:', emotion);
+      }
 
       const letter = await generateHealingLetter(input, emotion);
       
@@ -406,6 +428,8 @@ const HealingNoteApp = () => {
       calculateEmotionStats(updatedLetters);
       
       setInput('');
+      setSelectedEmotion('');  // 清除選擇的情緒
+      setShowEmotionSelector(false);  // 關閉選擇器
       
     } catch (error) {
       console.error('生成信件失敗:', error);
@@ -798,6 +822,59 @@ const HealingNoteApp = () => {
                       <Mic size={20} />
                     </button>
                   </div>
+
+                  {/* 🎨 情緒選擇器按鈕 */}
+                  <button
+                    type="button"
+                    onClick={() => setShowEmotionSelector(!showEmotionSelector)}
+                    className="w-full py-2 rounded-xl bg-purple-100 text-purple-700 font-medium hover:bg-purple-200 transition-all flex items-center justify-center gap-2 mb-2"
+                  >
+                    <span className="text-lg">{selectedEmotion ? emotionOptions.find(e => e.value === selectedEmotion)?.emoji : '😊'}</span>
+                    <span className="text-sm">
+                      {selectedEmotion ? `已選: ${selectedEmotion}` : '選擇情緒 (可選)'}
+                    </span>
+                  </button>
+
+                  {/* 🎨 情緒選擇器面板 */}
+                  {showEmotionSelector && (
+                    <div className="mb-3 p-4 bg-gradient-to-br from-purple-50 to-pink-50 rounded-2xl border-2 border-purple-200 animate-fade-in">
+                      <p className="text-sm font-medium text-gray-700 mb-3 text-center">
+                        💭 選擇或修改情緒 (不選則由 AI 自動判斷)
+                      </p>
+                      <div className="grid grid-cols-3 gap-2">
+                        {emotionOptions.map((emotion) => (
+                          <button
+                            key={emotion.value}
+                            type="button"
+                            onClick={() => {
+                              setSelectedEmotion(emotion.value);
+                              setShowEmotionSelector(false);
+                            }}
+                            className={`p-3 rounded-xl text-sm font-medium transition-all transform hover:scale-105 ${
+                              selectedEmotion === emotion.value
+                                ? 'bg-gradient-to-r from-purple-500 to-pink-500 text-white shadow-lg scale-105'
+                                : 'bg-white text-gray-700 hover:bg-purple-100 shadow-sm'
+                            }`}
+                          >
+                            <div className="text-2xl mb-1">{emotion.emoji}</div>
+                            <div className="text-xs">{emotion.label}</div>
+                          </button>
+                        ))}
+                      </div>
+                      {selectedEmotion && (
+                        <button
+                          type="button"
+                          onClick={() => {
+                            setSelectedEmotion('');
+                            setShowEmotionSelector(false);
+                          }}
+                          className="mt-3 w-full py-2 bg-gray-200 text-gray-700 rounded-xl text-xs font-medium hover:bg-gray-300 transition-all"
+                        >
+                          清除選擇 (讓 AI 判斷)
+                        </button>
+                      )}
+                    </div>
+                  )}
 
                   <button
                     type="submit"

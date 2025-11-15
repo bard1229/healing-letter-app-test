@@ -48,7 +48,7 @@ const HealingNoteApp = () => {
   const [authLoading, setAuthLoading] = useState(true);
   const [input, setInput] = useState('');
   const [isListening, setIsListening] = useState(false);
-// 🎨 奶茶暖色系 CSS - 自動覆蓋所有紫色和粉色
+// 🎨 奶茶暖色系 CSS - 加強版
 const teaWarmStyles = `
   /* 主要漸層 */
   .bg-gradient-to-r.from-purple-500.to-pink-500,
@@ -56,27 +56,59 @@ const teaWarmStyles = `
     background: linear-gradient(to right, #C9A386, #D4A373) !important;
   }
   
-  /* 紫色替換 */
-  .bg-purple-600 { background-color: #A87D5F !important; }
-  .bg-purple-500 { background-color: #C9A386 !important; }
-  .bg-purple-200 { background-color: #E8D4C4 !important; }
-  .bg-purple-100 { background-color: #E8D4C4 !important; }
-  .bg-purple-50 { background-color: #FBF7F4 !important; }
+  /* 紫色背景 - 加強優先級 */
+  .bg-purple-600,
+  div.bg-purple-600 { background-color: #A87D5F !important; }
   
-  .text-purple-700 { color: #5A4A42 !important; }
-  .text-purple-600 { color: #A87D5F !important; }
-  .text-purple-500 { color: #C9A386 !important; }
+  .bg-purple-500,
+  div.bg-purple-500 { background-color: #C9A386 !important; }
   
+  .bg-purple-200,
+  div.bg-purple-200 { background-color: #E8D4C4 !important; }
+  
+  .bg-purple-100,
+  div.bg-purple-100,
+  span.bg-purple-100 { background-color: #E8D4C4 !important; }
+  
+  .bg-purple-50,
+  div.bg-purple-50 { background-color: #FBF7F4 !important; }
+  
+  /* 紫色文字 - 加強優先級 */
+  .text-purple-700,
+  div.text-purple-700,
+  span.text-purple-700 { color: #5A4A42 !important; }
+  
+  .text-purple-600,
+  div.text-purple-600,
+  span.text-purple-600 { color: #A87D5F !important; }
+  
+  .text-purple-500,
+  div.text-purple-500,
+  span.text-purple-500 { color: #C9A386 !important; }
+  
+  /* 紫色邊框 */
   .border-purple-300,
   .border-purple-200,
   .border-purple-100 { border-color: #E8D4C4 !important; }
   
-  /* 粉色替換 */
-  .bg-pink-600 { background-color: #B8865F !important; }
-  .bg-pink-500 { background-color: #D4A373 !important; }
-  .bg-pink-50 { background-color: #FFF9F5 !important; }
+  /* 粉色背景 */
+  .bg-pink-600,
+  div.bg-pink-600 { background-color: #B8865F !important; }
   
-  .text-pink-600 { color: #D4A373 !important; }
+  .bg-pink-500,
+  div.bg-pink-500 { background-color: #D4A373 !important; }
+  
+  .bg-pink-50,
+  div.bg-pink-50 { background-color: #FFF9F5 !important; }
+  
+  /* 粉色文字 - 加強優先級 */
+  .text-pink-600,
+  div.text-pink-600,
+  span.text-pink-600 { color: #D4A373 !important; }
+  
+  .text-pink-500,
+  div.text-pink-500,
+  span.text-pink-500 { color: #C9A386 !important; }
   
   /* Hover 效果增強 */
   .bg-gradient-to-r:hover {

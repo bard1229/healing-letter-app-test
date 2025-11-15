@@ -135,13 +135,13 @@ const HealingNoteApp = () => {
       querySnapshot.forEach((doc) => {
         const data = doc.data();
         
-        // 🔧 清理舊療癒信的格式
+        // 🔧 清理舊療癒信的格式 (加強版)
         const cleanedContent = data.content
           ? data.content
-              .replace(/\[同理段落\]\s*💙/g, '')
-              .replace(/\[分析感受\]\s*💡/g, '')
-              .replace(/\[具體建議\]\s*💡/g, '')
-              .replace(/\[溫暖鼓勵\]\s*✨/g, '')
+              .replace(/\[同理段落\]/g, '')
+              .replace(/\[分析感受\]/g, '')
+              .replace(/\[具體建議\]/g, '')
+              .replace(/\[溫暖鼓勵\]/g, '')
               .replace(/\*\*/g, '')
               .replace(/###\s*/g, '')
               .replace(/##\s*/g, '')
@@ -283,13 +283,13 @@ const HealingNoteApp = () => {
       querySnapshot.forEach((doc) => {
         const data = doc.data();
         
-        // 🔧 清理舊報告的格式 (即使是從 Firestore 讀出來的)
+        // 🔧 清理舊報告的格式 (加強版)
         const cleanedContent = data.content
           ? data.content
-              .replace(/\[同理段落\]\s*💙/g, '')
-              .replace(/\[分析感受\]\s*💡/g, '')
-              .replace(/\[具體建議\]\s*💡/g, '')
-              .replace(/\[溫暖鼓勵\]\s*✨/g, '')
+              .replace(/\[同理段落\]/g, '')
+              .replace(/\[分析感受\]/g, '')
+              .replace(/\[具體建議\]/g, '')
+              .replace(/\[溫暖鼓勵\]/g, '')
               .replace(/\*\*/g, '')
               .replace(/###\s*/g, '')
               .replace(/##\s*/g, '')
@@ -364,12 +364,12 @@ const HealingNoteApp = () => {
 
       const letter = await generateHealingLetter(input, emotion);
       
-      // 🔧 清理 Markdown 格式和後台標籤
+      // 🔧 清理 Markdown 格式和後台標籤 (加強版)
       const cleanedLetter = letter
-        .replace(/\[同理段落\]\s*💙/g, '')     // 移除 [同理段落]
-        .replace(/\[分析感受\]\s*💡/g, '')     // 移除 [分析感受]
-        .replace(/\[具體建議\]\s*💡/g, '')     // 移除 [具體建議]
-        .replace(/\[溫暖鼓勵\]\s*✨/g, '')     // 移除 [溫暖鼓勵]
+        .replace(/\[同理段落\]/g, '')          // 移除 [同理段落]
+        .replace(/\[分析感受\]/g, '')          // 移除 [分析感受]
+        .replace(/\[具體建議\]/g, '')          // 移除 [具體建議]
+        .replace(/\[溫暖鼓勵\]/g, '')          // 移除 [溫暖鼓勵]
         .replace(/\*\*/g, '')                  // 移除 **
         .replace(/###\s*/g, '')                // 移除 ###
         .replace(/##\s*/g, '')                 // 移除 ##
@@ -472,12 +472,12 @@ const HealingNoteApp = () => {
       const recentLetters = letters.slice(-10);
       const analysis = await generateTrendAnalysis(recentLetters);
       
-      // 🔧 清理 Markdown 格式和後台標籤
+      // 🔧 清理 Markdown 格式和後台標籤 (加強版)
       const cleanedAnalysis = analysis
-        .replace(/\[同理段落\]\s*💙/g, '')     // 移除 [同理段落]
-        .replace(/\[分析感受\]\s*💡/g, '')     // 移除 [分析感受]
-        .replace(/\[具體建議\]\s*💡/g, '')     // 移除 [具體建議]
-        .replace(/\[溫暖鼓勵\]\s*✨/g, '')     // 移除 [溫暖鼓勵]
+        .replace(/\[同理段落\]/g, '')          // 移除 [同理段落]
+        .replace(/\[分析感受\]/g, '')          // 移除 [分析感受]
+        .replace(/\[具體建議\]/g, '')          // 移除 [具體建議]
+        .replace(/\[溫暖鼓勵\]/g, '')          // 移除 [溫暖鼓勵]
         .replace(/\*\*/g, '')                  // 移除 **
         .replace(/###\s*/g, '')                // 移除 ###
         .replace(/##\s*/g, '')                 // 移除 ##

@@ -328,12 +328,18 @@ const HealingNoteApp = () => {
 
       const letter = await generateHealingLetter(input, emotion);
       
-      // 🔧 清理 Markdown 格式
+      // 🔧 清理 Markdown 格式和後台標籤
       const cleanedLetter = letter
-        .replace(/\*\*/g, '')      // 移除 **
-        .replace(/##\s*/g, '')     // 移除 ##
-        .replace(/#\s*/g, '')      // 移除 #
-        .replace(/---/g, '')       // 移除 ---
+        .replace(/\[同理段落\]\s*💙/g, '')     // 移除 [同理段落]
+        .replace(/\[分析感受\]\s*💡/g, '')     // 移除 [分析感受]
+        .replace(/\[具體建議\]\s*💡/g, '')     // 移除 [具體建議]
+        .replace(/\[溫暖鼓勵\]\s*✨/g, '')     // 移除 [溫暖鼓勵]
+        .replace(/\*\*/g, '')                  // 移除 **
+        .replace(/###\s*/g, '')                // 移除 ###
+        .replace(/##\s*/g, '')                 // 移除 ##
+        .replace(/#\s*/g, '')                  // 移除 #
+        .replace(/---/g, '')                   // 移除 ---
+        .replace(/\n{3,}/g, '\n\n')            // 移除多餘空行
         .trim();
       
       const newLetter = {
@@ -430,12 +436,18 @@ const HealingNoteApp = () => {
       const recentLetters = letters.slice(-10);
       const analysis = await generateTrendAnalysis(recentLetters);
       
-      // 🔧 清理 Markdown 格式
+      // 🔧 清理 Markdown 格式和後台標籤
       const cleanedAnalysis = analysis
-        .replace(/\*\*/g, '')      // 移除 **
-        .replace(/##\s*/g, '')     // 移除 ##
-        .replace(/#\s*/g, '')      // 移除 #
-        .replace(/---/g, '')       // 移除 ---
+        .replace(/\[同理段落\]\s*💙/g, '')     // 移除 [同理段落]
+        .replace(/\[分析感受\]\s*💡/g, '')     // 移除 [分析感受]
+        .replace(/\[具體建議\]\s*💡/g, '')     // 移除 [具體建議]
+        .replace(/\[溫暖鼓勵\]\s*✨/g, '')     // 移除 [溫暖鼓勵]
+        .replace(/\*\*/g, '')                  // 移除 **
+        .replace(/###\s*/g, '')                // 移除 ###
+        .replace(/##\s*/g, '')                 // 移除 ##
+        .replace(/#\s*/g, '')                  // 移除 #
+        .replace(/---/g, '')                   // 移除 ---
+        .replace(/\n{3,}/g, '\n\n')            // 移除多餘空行
         .trim();
       
       const docRef = await addDoc(collection(db, 'trendAnalysis'), {
@@ -763,16 +775,21 @@ const HealingNoteApp = () => {
                 </form>
 
                 {/* 🔧 進度提醒 */}
-                <div className="mt-4 text-center text-xs text-gray-500">
+<div className="mt-4 text-center text-xs text-gray-500">
                   <p>💡 剩餘次數: {DAILY_LIMIT - dailyCount} / {DAILY_LIMIT}</p>
                   {daysUntilReport > 0 && (
                     <p className="mt-2 text-blue-600 font-medium">
-                      📊 再記錄 {daysUntilReport} 天就能看到你的情緒健康報告囉!
+                      📊 還差 {daysUntilReport} 天記錄就能生成情緒健康報告囉!(已記錄 {totalDays} 天)
                     </p>
                   )}
-                  {canGenerateReport && (
+                  {canGenerateReport && trendAnalyses.length === 0 && (
                     <p className="mt-2 text-green-600 font-medium">
-                      ✨ 你已經可以生成情緒健康報告了!寫完這封後點下方按鈕查看
+                      ✨ 已達 4 天記錄!寫完這封後點下方按鈕查看報告
+                    </p>
+                  )}
+                  {canGenerateReport && trendAnalyses.length > 0 && (
+                    <p className="mt-2 text-purple-600 font-medium">
+                      💜 已有情緒健康報告!點下方按鈕查看
                     </p>
                   )}
                 </div>

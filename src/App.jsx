@@ -48,6 +48,54 @@ const HealingNoteApp = () => {
   const [authLoading, setAuthLoading] = useState(true);
   const [input, setInput] = useState('');
   const [isListening, setIsListening] = useState(false);
+// 🎨 奶茶暖色系 CSS - 自動覆蓋所有紫色和粉色
+const teaWarmStyles = `
+  /* 主要漸層 */
+  .bg-gradient-to-r.from-purple-500.to-pink-500,
+  .bg-gradient-to-br.from-purple-500.to-pink-500 {
+    background: linear-gradient(to right, #C9A386, #D4A373) !important;
+  }
+  
+  /* 紫色替換 */
+  .bg-purple-600 { background-color: #A87D5F !important; }
+  .bg-purple-500 { background-color: #C9A386 !important; }
+  .bg-purple-200 { background-color: #E8D4C4 !important; }
+  .bg-purple-100 { background-color: #E8D4C4 !important; }
+  .bg-purple-50 { background-color: #FBF7F4 !important; }
+  
+  .text-purple-700 { color: #5A4A42 !important; }
+  .text-purple-600 { color: #A87D5F !important; }
+  .text-purple-500 { color: #C9A386 !important; }
+  
+  .border-purple-300,
+  .border-purple-200,
+  .border-purple-100 { border-color: #E8D4C4 !important; }
+  
+  /* 粉色替換 */
+  .bg-pink-600 { background-color: #B8865F !important; }
+  .bg-pink-500 { background-color: #D4A373 !important; }
+  .bg-pink-50 { background-color: #FFF9F5 !important; }
+  
+  .text-pink-600 { color: #D4A373 !important; }
+  
+  /* Hover 效果增強 */
+  .bg-gradient-to-r:hover {
+    box-shadow: 0 6px 12px rgba(169, 131, 102, 0.3) !important;
+  }
+  
+  /* 背景色 */
+  body {
+    background: linear-gradient(135deg, #FFF9F5 0%, #FBF7F4 50%, #F5EDE7 100%) !important;
+  }
+`;
+
+// 注入樣式到頁面
+if (typeof document !== 'undefined' && !document.getElementById('tea-warm-styles')) {
+  const styleTag = document.createElement('style');
+  styleTag.id = 'tea-warm-styles';
+  styleTag.innerHTML = teaWarmStyles;
+  document.head.appendChild(styleTag);
+}
   const [isGenerating, setIsGenerating] = useState(false);
   const [currentLetter, setCurrentLetter] = useState(null);
   const [letters, setLetters] = useState([]);

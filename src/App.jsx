@@ -48,9 +48,19 @@ const HealingNoteApp = () => {
   const [authLoading, setAuthLoading] = useState(true);
   const [input, setInput] = useState('');
   const [isListening, setIsListening] = useState(false);
-// 🎨 奶茶暖色系 CSS - 最終完整版
+// 🎨 奶茶暖色系 CSS - 終極完整版
 const teaWarmStyles = `
-  /* 主要漸層 - 深色按鈕 */
+  /* 主要頁面背景漸層 - 最高優先級 */
+  .bg-gradient-to-br.from-pink-50.via-purple-50.to-blue-50,
+  div.bg-gradient-to-br.from-pink-50.via-purple-50.to-blue-50 {
+    background: linear-gradient(135deg, #FFF9F5 0%, #FBF7F4 50%, #F5EDE7 100%) !important;
+  }
+  
+  .min-h-screen.bg-gradient-to-br {
+    background: linear-gradient(135deg, #FFF9F5 0%, #FBF7F4 50%, #F5EDE7 100%) !important;
+  }
+  
+  /* 主要按鈕漸層 */
   .bg-gradient-to-r.from-purple-500.to-pink-500,
   .bg-gradient-to-br.from-purple-500.to-pink-500 {
     background: linear-gradient(to right, #C9A386, #D4A373) !important;
@@ -126,11 +136,6 @@ const teaWarmStyles = `
   /* Hover 效果增強 */
   .bg-gradient-to-r:hover {
     box-shadow: 0 6px 12px rgba(169, 131, 102, 0.3) !important;
-  }
-  
-  /* 背景色 */
-  body {
-    background: linear-gradient(135deg, #FFF9F5 0%, #FBF7F4 50%, #F5EDE7 100%) !important;
   }
 `;
 

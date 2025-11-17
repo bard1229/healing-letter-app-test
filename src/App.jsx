@@ -495,50 +495,8 @@ if (typeof document !== 'undefined' && !document.getElementById('tea-warm-styles
   }
 };
 
-      const letter = await generateHealingLetter(input, emotion);
       
-      // 🔧 清理 Markdown 格式和後台標籤 (加強版)
-      const cleanedLetter = letter
-        .replace(/\[同理段落\]/g, '')          // 移除 [同理段落]
-        .replace(/\[分析感受\]/g, '')          // 移除 [分析感受]
-        .replace(/\[具體建議\]/g, '')          // 移除 [具體建議]
-        .replace(/\[溫暖鼓勵\]/g, '')          // 移除 [溫暖鼓勵]
-        .replace(/\*\*/g, '')                  // 移除 **
-        .replace(/###\s*/g, '')                // 移除 ###
-        .replace(/##\s*/g, '')                 // 移除 ##
-        .replace(/#\s*/g, '')                  // 移除 #
-        .replace(/---/g, '')                   // 移除 ---
-        .replace(/\n{3,}/g, '\n\n')            // 移除多餘空行
-        .trim();
-      
-      const newLetter = {
-        userInput: input,
-        content: cleanedLetter,  // 改用 content
-        emotion: emotion,
-        date: new Date().toISOString()
-      };
-      
-      setCurrentLetter(newLetter);
-      
-      const docRef = await addDoc(collection(db, 'letters'), {
-        userId: user.uid,
-        userInput: input,
-        content: cleanedLetter,  // 改用 content
-        emotion: emotion,
-        createdAt: Timestamp.now()
-      });
-
-      newLetter.id = docRef.id;
-      const updatedLetters = [...letters, newLetter];
-      setLetters(updatedLetters);
-      
-      setDailyCount(dailyCount + 1);
-
-      calculateEmotionStats(updatedLetters);
-      
-      setInput('');
-      setSelectedEmotion('');  // 清除選擇的情緒
-      setShowEmotionSelector(false);  // 關閉選擇器
+   
       
     } catch (error) {
       console.error('生成信件失敗:', error);

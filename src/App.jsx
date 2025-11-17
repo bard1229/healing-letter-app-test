@@ -158,7 +158,7 @@ if (typeof document !== 'undefined' && !document.getElementById('tea-warm-styles
   const [selectedDayLetters, setSelectedDayLetters] = useState([]);
   const [trendAnalyses, setTrendAnalyses] = useState([]);
   const [loading, setLoading] = useState(false);
-  const [dailyCount, setDailyCount] = useState(0);
+  
   const [emotionStats, setEmotionStats] = useState({});
   const [calendarDate, setCalendarDate] = useState(new Date());
   const [selectedEmotion, setSelectedEmotion] = useState('');
@@ -166,7 +166,7 @@ if (typeof document !== 'undefined' && !document.getElementById('tea-warm-styles
   const [searchKeyword, setSearchKeyword] = useState('');
 
   // 免費版每日限制
-  const DAILY_LIMIT = 2;
+  
 
   // 情緒 emoji 對照
   const emotionEmojis = {

@@ -807,24 +807,24 @@ if (typeof document !== 'undefined' && !document.getElementById('tea-warm-styles
         {/* 主要內容區 */}
         {!showHistory && !showTrend && !showStats && !showCalendar && !showSettings && (
           <>
-            {/* 統計卡片 - 混搭配色 */}
+            {/* 統計卡片 - 全淺藍配色 */}
             <div className="grid grid-cols-3 gap-4 mb-6">
-              {/* 總記錄 - 淺沙色 */}
+              {/* 總記錄 - 淺藍色 */}
               <div 
                 className="backdrop-blur-sm rounded-2xl shadow-md p-4 text-center transition-all hover:shadow-lg hover:scale-105"
-                style={{ background: '#F5EDE7' }}
+                style={{ background: '#EFF6FF' }}
               >
-                <div className="text-3xl font-bold" style={{ color: '#A87D5F' }}>{letters.length}</div>
-                <div className="text-sm mt-1" style={{ color: '#8B7A70' }}>總記錄 📝</div>
+                <div className="text-3xl font-bold" style={{ color: '#3B82F6' }}>{letters.length}</div>
+                <div className="text-sm mt-1 text-gray-600">總記錄 📝</div>
               </div>
               
-              {/* 連續天數 - 淺焦糖色 */}
+              {/* 連續天數 - 淺藍色 */}
               <div 
                 className="backdrop-blur-sm rounded-2xl shadow-md p-4 text-center transition-all hover:shadow-lg hover:scale-105"
-                style={{ background: '#FCE8DD' }}
+                style={{ background: '#EFF6FF' }}
               >
-                <div className="text-3xl font-bold" style={{ color: '#D4A373' }}>{checkConsecutiveDays(letters)}</div>
-                <div className="text-sm mt-1" style={{ color: '#B8865F' }}>連續天數 🔥</div>
+                <div className="text-3xl font-bold" style={{ color: '#3B82F6' }}>{checkConsecutiveDays(letters)}</div>
+                <div className="text-sm mt-1 text-gray-600">連續天數 🔥</div>
               </div>
               
               {/* 記錄天數 - 淺藍色 */}
@@ -1119,33 +1119,36 @@ if (typeof document !== 'undefined' && !document.getElementById('tea-warm-styles
               </div>
             )}
 
-            {/* 功能按鈕 */}
+            {/* 功能按鈕 - 沙色背景 */}
             <div className="grid grid-cols-2 gap-4">
               <button
                 onClick={() => setShowHistory(true)}
-                className="bg-white/80 backdrop-blur-sm rounded-2xl shadow-md p-6 hover:shadow-lg transition-all text-left group"
+                className="backdrop-blur-sm rounded-2xl shadow-md p-6 transition-all text-left group hover:shadow-xl hover:scale-105"
+                style={{ background: '#F5EDE7' }}
               >
-                <Clock className="text-blue-600 mb-3 group-hover:scale-110 transition-transform" size={28} />
-                <h3 className="font-medium text-gray-800 mb-1">歷史記錄 📚</h3>
-                <p className="text-sm text-gray-600">查看過去的對話</p>
+                <Clock className="mb-3 group-hover:scale-110 transition-transform" style={{ color: '#A87D5F' }} size={28} />
+                <h3 className="font-medium mb-1" style={{ color: '#5A4A42' }}>歷史記錄 📚</h3>
+                <p className="text-sm" style={{ color: '#8B7A70' }}>查看過去的對話</p>
               </button>
 
               <button
                 onClick={() => setShowCalendar(true)}
-                className="bg-white/80 backdrop-blur-sm rounded-2xl shadow-md p-6 hover:shadow-lg transition-all text-left group"
+                className="backdrop-blur-sm rounded-2xl shadow-md p-6 transition-all text-left group hover:shadow-xl hover:scale-105"
+                style={{ background: '#F5EDE7' }}
               >
-                <Calendar className="text-green-600 mb-3 group-hover:scale-110 transition-transform" size={28} />
-                <h3 className="font-medium text-gray-800 mb-1">日曆檢視 📅</h3>
-                <p className="text-sm text-gray-600">看看哪些日子有記錄</p>
+                <Calendar className="mb-3 group-hover:scale-110 transition-transform" style={{ color: '#A87D5F' }} size={28} />
+                <h3 className="font-medium mb-1" style={{ color: '#5A4A42' }}>日曆檢視 📅</h3>
+                <p className="text-sm" style={{ color: '#8B7A70' }}>看看哪些日子有記錄</p>
               </button>
 
               <button
                 onClick={() => setShowStats(true)}
-                className="bg-white/80 backdrop-blur-sm rounded-2xl shadow-md p-6 hover:shadow-lg transition-all text-left group"
+                className="backdrop-blur-sm rounded-2xl shadow-md p-6 transition-all text-left group hover:shadow-xl hover:scale-105"
+                style={{ background: '#F5EDE7' }}
               >
-                <BarChart3 className="text-purple-600 mb-3 group-hover:scale-110 transition-transform" size={28} />
-                <h3 className="font-medium text-gray-800 mb-1">情緒統計 📊</h3>
-                <p className="text-sm text-gray-600">了解你的情緒變化</p>
+                <BarChart3 className="mb-3 group-hover:scale-110 transition-transform" style={{ color: '#A87D5F' }} size={28} />
+                <h3 className="font-medium mb-1" style={{ color: '#5A4A42' }}>情緒統計 📊</h3>
+                <p className="text-sm" style={{ color: '#8B7A70' }}>了解你的情緒變化</p>
               </button>
 
               {/* 🔧 修正趨勢報告按鈕邏輯 - 查看報告而非生成 */}
@@ -1158,19 +1161,24 @@ if (typeof document !== 'undefined' && !document.getElementById('tea-warm-styles
                   }
                 }}
                 disabled={!canGenerateReport}
-                className={`rounded-2xl shadow-md p-6 transition-all text-left group ${
+                className={`backdrop-blur-sm rounded-2xl shadow-md p-6 transition-all text-left group ${
                   !canGenerateReport
-                    ? 'bg-gray-200 cursor-not-allowed'
-                    : 'bg-white/80 backdrop-blur-sm hover:shadow-lg'
+                    ? 'cursor-not-allowed'
+                    : 'hover:shadow-xl hover:scale-105'
                 }`}
+                style={{ 
+                  background: !canGenerateReport ? '#E5E7EB' : '#F5EDE7'
+                }}
               >
                 <TrendingUp 
-                  className={`mb-3 group-hover:scale-110 transition-transform ${
-                    !canGenerateReport ? 'text-gray-400' : 'text-indigo-600'
-                  }`} 
+                  className="mb-3 group-hover:scale-110 transition-transform" 
+                  style={{ color: !canGenerateReport ? '#9CA3AF' : '#A87D5F' }}
                   size={28} 
                 />
-                <h3 className={`font-medium mb-1 ${!canGenerateReport ? 'text-gray-500' : 'text-gray-800'}`}>
+                <h3 
+                  className="font-medium mb-1"
+                  style={{ color: !canGenerateReport ? '#6B7280' : '#5A4A42' }}
+                >
                   情緒健康報告 📈
                 </h3>
                 <p className={`text-sm ${!canGenerateReport ? 'text-gray-400' : 'text-gray-600'}`}>

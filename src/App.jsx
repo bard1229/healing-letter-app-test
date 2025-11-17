@@ -460,30 +460,40 @@ if (typeof document !== 'undefined' && !document.getElementById('tea-warm-styles
   };
 
   const handleSubmit = async (e) => {
-    e.preventDefault();
-    
-    if (!input.trim()) {
-      alert('請輸入你的心情 💭');
-      return;
-    }
+  e.preventDefault();
+  if (!input.trim()) return;
 
-    if (dailyCount >= DAILY_LIMIT) {
-      alert(`免費版每天限制 ${DAILY_LIMIT} 次喔 💙\n\n明天再來記錄吧!`);
-      return;
-    }
+  setIsGenerating(true);
+  setError('');
 
-    setIsGenerating(true);
+  try {
+    // 直接保存日記,不呼叫 AI
+    const letterRef = doc(collection(db, `users/${user.uid}/letters`));
+    await setDoc(letterRef, {
+      userInput: input,
+      content: "", // 不再生成 AI 回應
+      emotion: selectedEmotion || "未分類",
+      date: Timestamp.now(),
+      timestamp: Date.now()
+    });
 
-    try {
-      // 🎨 使用選擇的情緒或 AI 判斷
-      let emotion;
-      if (selectedEmotion) {
-        emotion = selectedEmotion;
-        console.log('使用者選擇的情緒:', emotion);
-      } else {
-        emotion = await analyzeEmotion(input);
-        console.log('AI 判斷的情緒:', emotion);
-      }
+    // 重新載入日記列表
+    await loadLetters();
+
+    // 清空輸入
+    setInput('');
+    setSelectedEmotion('');
+    setShowEmotionSelector(false);
+
+    alert('日記已保存! 📔');
+
+  } catch (error) {
+    console.error('保存失敗:', error);
+    setError('保存失敗,請稍後再試 😢');
+  } finally {
+    setIsGenerating(false);
+  }
+};
 
       const letter = await generateHealingLetter(input, emotion);
       
@@ -949,7 +959,7 @@ if (typeof document !== 'undefined' && !document.getElementById('tea-warm-styles
                     <textarea
                       value={input}
                       onChange={(e) => setInput(e.target.value)}
-                      placeholder="分享你的心情、煩惱、或任何想說的話...&#10;歐特都在這裡傾聽 💙"
+                      placeholder="分享你的心情、煩惱、或任何想說的話...&#10;歐特在這裡陪伴你成長 🥰"
                       className="w-full h-32 p-4 pr-12 border-2 border-purple-100 rounded-2xl focus:border-purple-300 focus:outline-none resize-none"
                       disabled={isGenerating || dailyCount >= DAILY_LIMIT}
                     />

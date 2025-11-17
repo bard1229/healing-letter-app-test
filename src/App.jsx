@@ -498,13 +498,7 @@ if (typeof document !== 'undefined' && !document.getElementById('tea-warm-styles
       
    
       
-    } catch (error) {
-      console.error('生成信件失敗:', error);
-      alert('抱歉,生成信件時發生錯誤 😢\n\n請稍後再試,或檢查網路連線!');
-    } finally {
-      setIsGenerating(false);
-    }
-  };
+   
 
   const handleVoiceInput = () => {
     if (!('webkitSpeechRecognition' in window)) {

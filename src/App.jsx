@@ -976,9 +976,9 @@ if (typeof document !== 'undefined' && !document.getElementById('tea-warm-styles
 
                   <button
                     type="submit"
-                    disabled={isGenerating || !input.trim() || dailyCount >= DAILY_LIMIT}
+                    disabled={isGenerating || !input.trim()}
                     className={`w-full py-3 rounded-2xl font-medium transition-all flex items-center justify-center gap-2 ${
-                      isGenerating || !input.trim() || dailyCount >= DAILY_LIMIT
+                      isGenerating || !input.trim()
                         ? 'bg-gray-300 text-gray-500'
                         : 'bg-gradient-to-r from-purple-500 to-pink-500 text-white hover:shadow-lg'
                     }`}
@@ -986,12 +986,12 @@ if (typeof document !== 'undefined' && !document.getElementById('tea-warm-styles
                     {isGenerating ? (
                       <>
                         <div className="w-5 h-5 border-2 border-white border-t-transparent rounded-full animate-spin" />
-                        歐特正在理解你的心情...
+                        保存中......
                       </>
                     ) : (
                       <>
                         <Send size={20} />
-                        送出 💌
+                        保存日記 💾
                       </>
                     )}
                   </button>

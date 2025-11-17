@@ -807,17 +807,31 @@ if (typeof document !== 'undefined' && !document.getElementById('tea-warm-styles
         {/* 主要內容區 */}
         {!showHistory && !showTrend && !showStats && !showCalendar && !showSettings && (
           <>
-            {/* 統計卡片 */}
+            {/* 統計卡片 - 混搭配色 */}
             <div className="grid grid-cols-3 gap-4 mb-6">
-              <div className="bg-white/80 backdrop-blur-sm rounded-2xl shadow-md p-4 text-center">
-                <div className="text-3xl font-bold text-purple-600">{letters.length}</div>
-                <div className="text-sm text-gray-600 mt-1">總記錄 📝</div>
+              {/* 總記錄 - 淺沙色 */}
+              <div 
+                className="backdrop-blur-sm rounded-2xl shadow-md p-4 text-center transition-all hover:shadow-lg hover:scale-105"
+                style={{ background: '#F5EDE7' }}
+              >
+                <div className="text-3xl font-bold" style={{ color: '#A87D5F' }}>{letters.length}</div>
+                <div className="text-sm mt-1" style={{ color: '#8B7A70' }}>總記錄 📝</div>
               </div>
-              <div className="bg-white/80 backdrop-blur-sm rounded-2xl shadow-md p-4 text-center">
-                <div className="text-3xl font-bold text-pink-600">{checkConsecutiveDays(letters)}</div>
-                <div className="text-sm text-gray-600 mt-1">連續天數 🔥</div>
+              
+              {/* 連續天數 - 淺焦糖色 */}
+              <div 
+                className="backdrop-blur-sm rounded-2xl shadow-md p-4 text-center transition-all hover:shadow-lg hover:scale-105"
+                style={{ background: '#FCE8DD' }}
+              >
+                <div className="text-3xl font-bold" style={{ color: '#D4A373' }}>{checkConsecutiveDays(letters)}</div>
+                <div className="text-sm mt-1" style={{ color: '#B8865F' }}>連續天數 🔥</div>
               </div>
-              <div className="bg-white/80 backdrop-blur-sm rounded-2xl shadow-md p-4 text-center">
+              
+              {/* 記錄天數 - 淺藍色 */}
+              <div 
+                className="backdrop-blur-sm rounded-2xl shadow-md p-4 text-center transition-all hover:shadow-lg hover:scale-105"
+                style={{ background: '#EFF6FF' }}
+              >
                 <div className="text-3xl font-bold text-blue-600">{totalDays}</div>
                 <div className="text-sm text-gray-600 mt-1">記錄天數 📅</div>
               </div>

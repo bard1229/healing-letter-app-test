@@ -48,6 +48,7 @@ const HealingNoteApp = () => {
   const [authLoading, setAuthLoading] = useState(true);
   const [input, setInput] = useState('');
   const [isListening, setIsListening] = useState(false);
+  const [error, setError] = useState('');
 // 🎨 奶茶暖色系 CSS - 終極完整版
 const teaWarmStyles = `
   /* 主要頁面背景漸層 - 最高優先級 */
@@ -226,7 +227,7 @@ if (typeof document !== 'undefined' && !document.getElementById('tea-warm-styles
           setAuthLoading(false);
           setLetters([]);
           setTrendAnalyses([]);
-          setDailyCount(0);
+          
         }
       }
     });
@@ -283,7 +284,7 @@ if (typeof document !== 'undefined' && !document.getElementById('tea-warm-styles
       const todayLetters = loadedLetters.filter(l => 
         new Date(l.date).toDateString() === today
       );
-      setDailyCount(todayLetters.length);
+      
 
       // 計算情緒統計
       calculateEmotionStats(loadedLetters);

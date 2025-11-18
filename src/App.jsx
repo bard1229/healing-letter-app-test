@@ -30,6 +30,12 @@
 // ========================================
 // 完整程式碼如下 (複製整個檔案):
 // ========================================
+import { 
+  WeeklyReportCard, 
+  WeeklyReportsPage, 
+  WeeklyReportDetailPage,
+  WeeklyReportTestPanel 
+} from './components/WeeklyReportSystem';
 
 import React, { useState, useEffect } from 'react';
 import { Heart, Mic, Send, Clock, TrendingUp, Mail, Sparkles, Home, ArrowLeft, LogOut, Calendar, BarChart3, ChevronLeft, ChevronRight, AlertCircle, Share2, Facebook, Twitter, Instagram, Settings } from 'lucide-react';

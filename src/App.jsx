@@ -239,12 +239,11 @@ if (typeof document !== 'undefined' && !document.getElementById('tea-warm-styles
     try {
       setLoading(true);
       
-      collection(db, `users/${user.uid}/letters`);
-      const q = query(
-        lettersRef,
-        where('userId', '==', userId),
-        orderBy('createdAt', 'desc')
-      );
+      const lettersRef = collection(db, `users/${userId}/letters`);
+const q = query(
+  lettersRef,
+  orderBy('createdAt', 'desc')
+);
       
       const querySnapshot = await getDocs(q);
       const loadedLetters = [];

@@ -239,7 +239,7 @@ if (typeof document !== 'undefined' && !document.getElementById('tea-warm-styles
     try {
       setLoading(true);
       
-      const lettersRef = collection(db, `users/${userId}/letters`);
+      const lettersRef = collection(db, 'letters');
 const q = query(
   lettersRef,
   orderBy('createdAt', 'desc')
@@ -461,21 +461,20 @@ const q = query(
   if (!input.trim()) return;
 
   setIsGenerating(true);
-  setError('');
 
   try {
-    // 直接保存日記,不呼叫 AI
-    const letterRef = doc(collection(db, `users/${user.uid}/letters`));
-    await setDoc(letterRef, {
+    // 保存到 letters 集合 (舊路徑)
+    await addDoc(collection(db, 'letters'), {
+      userId: user.uid,
       userInput: input,
-      content: "", // 不再生成 AI 回應
+      content: "",
       emotion: selectedEmotion || "未分類",
-      date: Timestamp.now(),
+      createdAt: Timestamp.now(),
       timestamp: Date.now()
     });
 
-    // 重新載入日記列表
-    
+    // 重新載入資料
+    await loadUserData(user.uid);
 
     // 清空輸入
     setInput('');
@@ -486,7 +485,7 @@ const q = query(
 
   } catch (error) {
     console.error('保存失敗:', error);
-    setError('保存失敗,請稍後再試 😢');
+    alert('保存失敗,請稍後再試 😢');
   } finally {
     setIsGenerating(false);
   }

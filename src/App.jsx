@@ -1502,7 +1502,29 @@ const q = query(
           />
         )}
       </div>
+{/* 週報列表頁面 */}
+{showWeeklyReports && (
+  <WeeklyReportsPage
+    onClose={() => setShowWeeklyReports(false)}
+    onViewReport={handleViewReport}
+  />
+)}
 
+{/* 週報詳細內容頁面 */}
+{selectedReport && (
+  <WeeklyReportDetailPage
+    report={selectedReport}
+    onClose={() => setSelectedReport(null)}
+    onClaim={handleClaimReport}
+    onUnlock={handleUnlockReport}
+  />
+)}
+
+{/* 開發者測試面板 */}
+<WeeklyReportTestPanel
+  isDevelopment={isDevelopment}
+  onCreateTestReport={handleCreateTestReport}
+/>
       <style jsx>{`
         @keyframes fade-in {
           from { opacity: 0; transform: translateY(10px); }

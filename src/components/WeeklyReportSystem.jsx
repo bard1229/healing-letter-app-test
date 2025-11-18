@@ -206,7 +206,7 @@ export const WeeklyReportsPage = ({ onClose, onViewReport }) => {
             </div>
           ) : (
             weeklyReports.map((report, index) => (
-              <WeeklyReportCard
+              <WeeklyReportListItem
                 key={report.id}
                 report={report}
                 index={weeklyReports.length - index}
@@ -246,7 +246,6 @@ export const WeeklyReportsPage = ({ onClose, onViewReport }) => {
 
 // ==================== 週報卡片 (列表項目) ====================
 
-// ✅ 正確 (第 249 行)
 const WeeklyReportListItem = ({ report, index, onView }) => {
   const getStatusBadge = () => {
     if (report.status === 'pending') {

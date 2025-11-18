@@ -476,7 +476,7 @@ if (typeof document !== 'undefined' && !document.getElementById('tea-warm-styles
     });
 
     // 重新載入日記列表
-    await loadLetters();
+    
 
     // 清空輸入
     setInput('');

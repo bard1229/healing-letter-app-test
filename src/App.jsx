@@ -816,7 +816,11 @@ const q = query(
                 <div className="text-sm text-gray-600 mt-1">記錄天數 📅</div>
               </div>
             </div>
-
+{/* 週報提示卡片 */}
+<WeeklyReportCard 
+  letters={letters}
+  onViewReports={() => setShowWeeklyReports(true)}
+/>
             {/* 當前信件顯示 */}
             {currentLetter ? (
               <div className="bg-white/90 backdrop-blur-sm rounded-3xl shadow-xl p-8 mb-6 animate-fade-in">

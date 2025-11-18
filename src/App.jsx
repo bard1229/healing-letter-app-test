@@ -171,7 +171,13 @@ if (typeof document !== 'undefined' && !document.getElementById('tea-warm-styles
   const [selectedEmotion, setSelectedEmotion] = useState('');
   const [showEmotionSelector, setShowEmotionSelector] = useState(false);
   const [searchKeyword, setSearchKeyword] = useState('');
+// 週報相關狀態
+const [showWeeklyReports, setShowWeeklyReports] = useState(false);
+const [selectedReport, setSelectedReport] = useState(null);
+const [weeklyReports, setWeeklyReports] = useState([]);
 
+// 開發模式 (測試完改成 false)
+const isDevelopment = true;
   // 免費版每日限制
   
 

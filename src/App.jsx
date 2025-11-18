@@ -239,7 +239,7 @@ if (typeof document !== 'undefined' && !document.getElementById('tea-warm-styles
     try {
       setLoading(true);
       
-      const lettersRef = collection(db, 'letters');
+      collection(db, `users/${user.uid}/letters`);
       const q = query(
         lettersRef,
         where('userId', '==', userId),

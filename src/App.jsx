@@ -540,11 +540,7 @@ const q = query(
   alert('🧪 測試解鎖成功！(實際需接金流)');
 };
     
-    const unlockedReport = weeklyReports.find(r => r.id === reportId);
-    if (unlockedReport) {
-      setSelectedReport({ ...unlockedReport, status: 'paid' });
-    }
-  };
+    
 
   // 查看報告
   const handleViewReport = (report) => {

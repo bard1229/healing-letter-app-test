@@ -865,7 +865,7 @@ if (typeof document !== 'undefined' && !document.getElementById('tea-warm-styles
                       onChange={(e) => setInput(e.target.value)}
                       placeholder="分享你的心情、煩惱、或任何想說的話...&#10;歐特在這裡陪伴你成長 🥰"
                       className="w-full h-32 p-4 pr-12 border-2 border-purple-100 rounded-2xl focus:border-purple-300 focus:outline-none resize-none"
-                      disabled={isGenerating || dailyCount >= DAILY_LIMIT}
+                      disabled={isGenerating}
                     />
                     <button
                       type="button"
@@ -875,7 +875,7 @@ if (typeof document !== 'undefined' && !document.getElementById('tea-warm-styles
                           ? 'bg-red-500 text-white animate-pulse' 
                           : 'bg-purple-100 text-purple-600 hover:bg-purple-200'
                       }`}
-                      disabled={isGenerating || dailyCount >= DAILY_LIMIT}
+                      disabled={isGenerating}
                     >
                       <Mic size={20} />
                     </button>
@@ -961,7 +961,7 @@ if (typeof document !== 'undefined' && !document.getElementById('tea-warm-styles
                 <div className="mt-4 space-y-3">
                   {/* 剩餘次數 */}
                   <div className="text-center text-xs text-gray-500">
-                    <p>💡 今日剩餘次數: {DAILY_LIMIT - dailyCount} / {DAILY_LIMIT}</p>
+                    
                   </div>
 
                   {/* 記錄統計 */}

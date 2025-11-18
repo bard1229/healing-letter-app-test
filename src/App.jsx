@@ -990,57 +990,7 @@ const q = query(
                     
                   </div>
 
-                  {/* 記錄統計 */}
-                  <div className="flex items-center justify-center gap-6 text-xs">
-                    <div className="flex items-center gap-1">
-                      <span className="text-gray-500">📅 本週期:</span>
-                      <span className={`font-bold ${(totalDays % 4) === 0 && totalDays > 0 ? 'text-green-600' : 'text-blue-600'}`}>
-                        {totalDays % 4 === 0 && totalDays > 0 ? '4' : totalDays % 4}/4 天
-                      </span>
-                      {(totalDays % 4) === 0 && totalDays > 0 && <span className="text-green-600">✓</span>}
-                    </div>
-                    <div className="flex items-center gap-1">
-                      <span className="text-gray-500">🔥 連續記錄:</span>
-                      <span className="font-bold text-orange-600">
-                        {checkConsecutiveDays(letters)} 天
-                      </span>
-                    </div>
-                  </div>
-
-                  {/* 進度條 - 每 4 天重置 */}
-                  <div className="px-2">
-                    <div className="w-full bg-gray-200 rounded-full h-2.5 overflow-hidden">
-                      <div
-                        className={`h-2.5 rounded-full transition-all duration-500 ${
-                          (totalDays % 4) === 0 && totalDays > 0
-                            ? 'bg-gradient-to-r from-green-500 to-emerald-500' 
-                            : 'bg-gradient-to-r from-blue-500 to-purple-500'
-                        }`}
-                        style={{ 
-                          width: `${totalDays === 0 ? 0 : ((totalDays % 4 === 0 ? 4 : totalDays % 4) / 4) * 100}%` 
-                        }}
-                      />
-                    </div>
-                    <p className="text-center text-xs text-gray-400 mt-1">
-                      {(totalDays % 4) === 0 && totalDays > 0 
-                        ? '本週期已完成! 🎉' 
-                        : `進度 ${Math.round(((totalDays % 4) / 4) * 100)}%`}
-                    </p>
-                  </div>
-
-                  {/* 總記錄天數 */}
-                  <div className="text-center text-xs text-gray-500">
-                    <p>📊 累積記錄: {totalDays} 天 | 已生成 {trendAnalyses.length} 份報告 💜</p>
-                  </div>
-
                  
-                  {(totalDays % 4) === 0 && totalDays > 0 && trendAnalyses.length * 4 >= totalDays && (
-                    <div className="text-center p-2 bg-purple-50 rounded-xl">
-                      <p className="text-xs text-purple-700 font-medium">
-                        💜 已有最新報告!繼續記錄 4 天後可生成下一份
-                      </p>
-                    </div>
-                  )}
                 </div>
               </div>
             )}

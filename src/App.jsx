@@ -34,7 +34,7 @@
 import React, { useState, useEffect } from 'react';
 import { Heart, Mic, Send, Clock, TrendingUp, Mail, Sparkles, Home, ArrowLeft, LogOut, Calendar, BarChart3, ChevronLeft, ChevronRight, AlertCircle, Share2, Facebook, Twitter, Instagram, Settings } from 'lucide-react';
 import { onAuthStateChanged, signOut } from 'firebase/auth';
-import { collection, addDoc, query, where, getDocs, orderBy, Timestamp } from 'firebase/firestore';
+import { doc,collection, addDoc, query, where, getDocs, orderBy,setDoc, Timestamp } from 'firebase/firestore';
 import { auth, db } from './firebase';
 import LoginPage from './LoginPage';
 import SettingsPage from './SettingsPage';

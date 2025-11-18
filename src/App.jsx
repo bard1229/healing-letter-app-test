@@ -502,7 +502,69 @@ const q = query(
     setIsGenerating(false);
   }
 };
+// ==================== 週報系統函數 ====================
+  
+  // 領取週報
+  const handleClaimReport = (reportId) => {
+    setWeeklyReports(prev => 
+      prev.map(report => 
+        report.id === reportId 
+          ? { ...report, status: 'claimed' }
+          : report
+      )
+    );
+    alert('週報已領取！可以解鎖查看了 ✨');
+    setSelectedReport(null);
+  };
 
+  // 解鎖週報 (目前只是測試，未接金流)
+  const handleUnlockReport = (reportId) => {
+    setWeeklyReports(prev => 
+      prev.map(report => 
+        report.id === reportId 
+          ? { ...report, status: 'paid', paidAt: new Date().toISOString() }
+          : report
+      )
+    );
+    alert('🧪 測試解鎖成功！(實際需接金流)');
+    
+    const unlockedReport = weeklyReports.find(r => r.id === reportId);
+    if (unlockedReport) {
+      setSelectedReport({ ...unlockedReport, status: 'paid' });
+    }
+  };
+
+  // 查看報告
+  const handleViewReport = (report) => {
+    setSelectedReport(report);
+  };
+
+  // 建立測試週報 (開發用)
+  const handleCreateTestReport = () => {
+    const newReport = {
+      id: `test_${Date.now()}`,
+      weekNumber: 48,
+      year: 2025,
+      weekStart: '2025-11-25',
+      weekEnd: '2025-12-01',
+      totalDiaries: 4,
+      status: 'pending',
+      generatedAt: new Date().toISOString(),
+      content: {
+        overview: '測試週報內容...',
+        suggestions: ['測試建議1', '測試建議2'],
+        highlights: {
+          mostFrequent: { emotion: '開心', emoji: '😊', count: 2 },
+          moodStability: '穩定',
+          growth: '+10%'
+        },
+        encouragement: '測試鼓勵文字...'
+      }
+    };
+    
+    setWeeklyReports(prev => [newReport, ...prev]);
+    alert('測試週報已建立！');
+  };
       
    
       

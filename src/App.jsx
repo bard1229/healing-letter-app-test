@@ -578,62 +578,10 @@ if (typeof document !== 'undefined' && !document.getElementById('tea-warm-styles
   };
 
   // 🔧 生成趨勢報告 (修正邏輯)
-  const generateTrend = async () => {
-    const totalDays = getTotalDays(letters);
+  
+
     
-    if (totalDays < 4) {
-      alert(`至少需要 4 天的記錄才能生成情緒健康報告喔 📊\n\n目前記錄了 ${totalDays} 天`);
-      return;
-    }
-
-    setIsGenerating(true);
-    try {
-      const recentLetters = letters.slice(-10);
-      const analysis = await generateTrendAnalysis(recentLetters);
-      
-      // 🔧 清理 Markdown 格式和後台標籤 (加強版)
-      const cleanedAnalysis = analysis
-        .replace(/\[同理段落\]/g, '')          // 移除 [同理段落]
-        .replace(/\[分析感受\]/g, '')          // 移除 [分析感受]
-        .replace(/\[具體建議\]/g, '')          // 移除 [具體建議]
-        .replace(/\[溫暖鼓勵\]/g, '')          // 移除 [溫暖鼓勵]
-        .replace(/\*\*/g, '')                  // 移除 **
-        .replace(/###\s*/g, '')                // 移除 ###
-        .replace(/##\s*/g, '')                 // 移除 ##
-        .replace(/#\s*/g, '')                  // 移除 #
-        .replace(/---/g, '')                   // 移除 ---
-        .replace(/\n{3,}/g, '\n\n')            // 移除多餘空行
-        .trim();
-      
-      const docRef = await addDoc(collection(db, 'trendAnalysis'), {
-        userId: user.uid,
-        content: cleanedAnalysis,
-        letterCount: recentLetters.length,
-        createdAt: Timestamp.now()
-      });
-
-      const newAnalysis = {
-        id: docRef.id,
-        content: cleanedAnalysis,
-        letterCount: recentLetters.length,
-        date: new Date().toISOString()
-      };
-
-      setTrendAnalyses([newAnalysis, ...trendAnalyses]);
-      setShowTrend(true);
-      
-      // 🔧 生成後立即回到首頁,避免按鈕重複出現
-      setTimeout(() => {
-        setCurrentLetter(null);
-      }, 1000);
-      
-    } catch (error) {
-      console.error('生成趨勢分析失敗:', error);
-      alert('抱歉,生成趨勢分析時發生錯誤 😢');
-    } finally {
-      setIsGenerating(false);
-    }
-  };
+    
 
   const shareToSocial = (platform, content) => {
     const shareText = `我在 HealingNote 記錄了我的心情成長 💙\n\n${content.substring(0, 100)}...\n\n一起來記錄你的心情吧! ✨`;

@@ -1033,21 +1033,7 @@ const q = query(
                     <p>📊 累積記錄: {totalDays} 天 | 已生成 {trendAnalyses.length} 份報告 💜</p>
                   </div>
 
-                  /*{/* 狀態提示 */}
-                  {totalDays % 4 !== 0 && (
-                    <div className="text-center p-2 bg-blue-50 rounded-xl">
-                      <p className="text-xs text-blue-700 font-medium">
-                        📊 再記錄 {4 - (totalDays % 4)} 天就能生成新的情緒健康報告!
-                      </p>
-                    </div>
-                  )}
-                  {(totalDays % 4) === 0 && totalDays > 0 && trendAnalyses.length * 4 < totalDays && (
-                    <div className="text-center p-2 bg-green-50 rounded-xl animate-pulse">
-                      <p className="text-xs text-green-700 font-medium">
-                        ✨ 太棒了!可以生成新的情緒健康報告了!
-                      </p>
-                    </div>
-                  )}*/
+                 
                   {(totalDays % 4) === 0 && totalDays > 0 && trendAnalyses.length * 4 >= totalDays && (
                     <div className="text-center p-2 bg-purple-50 rounded-xl">
                       <p className="text-xs text-purple-700 font-medium">

@@ -836,49 +836,9 @@ if (typeof document !== 'undefined' && !document.getElementById('tea-warm-styles
                   </p>
                 </div>
 
-                {/* 🔧 第 4 天顯示按鈕 */}
-                {totalDays === 4 && trendAnalyses.length === 0 && (
-                  <div className="mt-6 p-6 bg-gradient-to-r from-blue-50 to-purple-50 rounded-2xl border-2 border-blue-200 animate-fade-in">
-                    <div className="flex items-center gap-2 text-blue-700 mb-3">
-                      <Sparkles size={24} />
-                      <span className="font-medium text-lg">這是你第 4 天的記錄 ✨</span>
-                    </div>
-                    <p className="text-gray-700 mb-4">
-                      累積了 4 天的心情記錄,現在可以為你生成專屬的情緒健康報告,
-                      看看這段時間的變化和成長 💙
-                    </p>
-                    <button
-                      onClick={generateTrend}
-                      disabled={isGenerating}
-                      className="w-full py-3 rounded-2xl bg-gradient-to-r from-blue-500 to-purple-500 text-white font-medium hover:shadow-lg transition-all flex items-center justify-center gap-2 disabled:opacity-50 disabled:cursor-not-allowed"
-                    >
-                      <TrendingUp size={20} />
-                      {isGenerating ? '生成中...' : '為我生成情緒健康報告'}
-                    </button>
-                  </div>
-                )}
+                
 
-                {/* 🔧 之後每 4 天更新 - 檢查是否為新週期 */}
-                {totalDays > 4 && totalDays % 4 === 0 && trendAnalyses.length > 0 && (
-                  <div className="mt-6 p-6 bg-gradient-to-r from-purple-50 to-pink-50 rounded-2xl border-2 border-purple-200 animate-fade-in">
-                    <div className="flex items-center gap-2 text-purple-700 mb-3">
-                      <TrendingUp size={24} />
-                      <span className="font-medium text-lg">又累積了 4 天記錄 ✨</span>
-                    </div>
-                    <p className="text-gray-700 mb-4">
-                      你已經記錄了 {totalDays} 天了!
-                      想看看最新的心情趨勢變化嗎?
-                    </p>
-                    <button
-                      onClick={generateTrend}
-                      disabled={isGenerating}
-                      className="w-full py-3 rounded-2xl bg-gradient-to-r from-purple-500 to-pink-500 text-white font-medium hover:shadow-lg transition-all flex items-center justify-center gap-2 disabled:opacity-50 disabled:cursor-not-allowed"
-                    >
-                      <TrendingUp size={20} />
-                      {isGenerating ? '生成中...' : '更新我的情緒健康報告'}
-                    </button>
-                  </div>
-                )}
+               
 
                 <button
                   onClick={goHome}

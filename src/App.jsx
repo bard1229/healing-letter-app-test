@@ -280,10 +280,7 @@ if (typeof document !== 'undefined' && !document.getElementById('tea-warm-styles
       console.log('載入了', loadedLetters.length, '封信件');
 
       // 計算今日已寫次數
-      const today = new Date().toDateString();
-      const todayLetters = loadedLetters.filter(l => 
-        new Date(l.date).toDateString() === today
-      );
+      
       
 
       // 計算情緒統計

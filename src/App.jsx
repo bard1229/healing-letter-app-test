@@ -806,7 +806,7 @@ if (typeof document !== 'undefined' && !document.getElementById('tea-warm-styles
                   <div>
                     <div className="flex items-center gap-2 mb-2">
                       <Heart className="text-purple-600" size={24} />
-                      <h2 className="text-xl font-medium text-gray-800">給你的療癒信 💌</h2>
+                      <h2 className="text-xl font-medium text-gray-800">我的專屬日記 📘</h2>
                     </div>
                     <p className="text-sm text-gray-500">
                       📅 {new Date(currentLetter.date).toLocaleDateString('zh-TW', {
@@ -830,11 +830,7 @@ if (typeof document !== 'undefined' && !document.getElementById('tea-warm-styles
                   <p className="text-gray-700 italic">"{currentLetter.userInput}"</p>
                 </div>
 
-                <div className="prose prose-lg max-w-none">
-                  <p className="text-gray-700 leading-relaxed whitespace-pre-wrap">
-                    {currentLetter.content}
-                  </p>
-                </div>
+                
 
                 
 

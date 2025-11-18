@@ -519,14 +519,25 @@ const q = query(
 
   // 解鎖週報 (目前只是測試，未接金流)
   const handleUnlockReport = (reportId) => {
-    setWeeklyReports(prev => 
-      prev.map(report => 
-        report.id === reportId 
-          ? { ...report, status: 'paid', paidAt: new Date().toISOString() }
-          : report
-      )
-    );
-    alert('🧪 測試解鎖成功！(實際需接金流)');
+  const reportToUnlock = weeklyReports.find(r => r.id === reportId);
+  if (!reportToUnlock) return;
+  
+  const unlockedReport = {
+    ...reportToUnlock,
+    status: 'paid',
+    paidAt: new Date().toISOString()
+  };
+  
+  setWeeklyReports(prev => 
+    prev.map(report => 
+      report.id === reportId ? unlockedReport : report
+    )
+  );
+  
+  setSelectedReport(unlockedReport);  // ← 關鍵!
+  
+  alert('🧪 測試解鎖成功！(實際需接金流)');
+};
     
     const unlockedReport = weeklyReports.find(r => r.id === reportId);
     if (unlockedReport) {

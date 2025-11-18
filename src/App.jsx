@@ -506,6 +506,7 @@ const q = query(
   
   // 領取週報
   const handleClaimReport = (reportId) => {
+    console.log('領取週報:', reportId); // 加這行測試
     setWeeklyReports(prev => 
       prev.map(report => 
         report.id === reportId 

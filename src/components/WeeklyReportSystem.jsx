@@ -246,7 +246,8 @@ export const WeeklyReportsPage = ({ onClose, onViewReport }) => {
 
 // ==================== 週報卡片 (列表項目) ====================
 
-const WeeklyReportCard = ({ report, index, onView }) => {
+// ✅ 正確 (第 249 行)
+const WeeklyReportListItem = ({ report, index, onView }) => {
   const getStatusBadge = () => {
     if (report.status === 'pending') {
       return (

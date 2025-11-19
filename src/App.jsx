@@ -1533,6 +1533,7 @@ const q = query(
 {/* 週報列表頁面 */}
 {showWeeklyReports && (
   <WeeklyReportsPage
+    weeklyReports={weeklyReports}
     onClose={() => setShowWeeklyReports(false)}
     onViewReport={handleViewReport}
   />

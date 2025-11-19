@@ -159,14 +159,7 @@ export const WeeklyReportCard = ({ letters, onViewReports }) => {
 
 // ==================== 週報列表頁面 ====================
 
-export const WeeklyReportsPage = ({ onClose, onViewReport }) => {
-  const [weeklyReports, setWeeklyReports] = useState([]);
-
-  useEffect(() => {
-    // 載入測試資料
-    setWeeklyReports(createTestWeeklyReports());
-  }, []);
-
+export const WeeklyReportsPage = ({ weeklyReports, onClose, onViewReport }) => {
   return (
     <div className="fixed inset-0 bg-black/50 flex items-center justify-center p-4 z-50">
       <div 

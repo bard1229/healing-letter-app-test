@@ -245,7 +245,7 @@ const isDevelopment = true;
     });
 // 初始化測試週報資料 (開發模式)
 useEffect(() => {
-  if (isDevelopment && user) {
+  if (isDevelopment && user && weeklyReports.length === 0) {
     const testReports = [
       {
         id: 'week_2025_47',

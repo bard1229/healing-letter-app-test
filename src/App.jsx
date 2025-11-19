@@ -325,7 +325,7 @@ useEffect(() => {
     setWeeklyReports(testReports);
     console.log('測試週報已載入:', testReports.length, '份');
   }
-}, [user, isDevelopment]);
+}, [user]);
     return () => unsubscribe();
   }, []);
 

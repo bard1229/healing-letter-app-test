@@ -1627,5 +1627,38 @@ const handleSelectPlan = (plan) => {
     </div>
   );
 };
+// ==================== 訂閱系統函數 ====================
 
+// 選擇方案
+const handleSelectPlan = (plan) => {
+  console.log('選擇方案:', plan);
+  
+  // 測試模式:直接模擬訂閱成功
+  if (isDevelopment) {
+    if (plan.id === 'trial') {
+      // 免費試用
+      setUserSubscription({
+        status: 'trial',
+        plan: 'trial',
+        startDate: new Date().toISOString(),
+        endDate: new Date(Date.now() + 7 * 24 * 60 * 60 * 1000).toISOString()
+      });
+      alert('🎉 免費試用已開通！7 天內可免費查看週報');
+    } else if (plan.id === 'monthly' || plan.id === 'yearly') {
+      // 訂閱方案
+      setUserSubscription({
+        status: 'active',
+        plan: plan.id,
+        startDate: new Date().toISOString(),
+        endDate: new Date(Date.now() + 30 * 24 * 60 * 60 * 1000).toISOString()
+      });
+      alert(`🎉 ${plan.name}訂閱成功！(測試模式)`);
+    } else if (plan.selectedItem) {
+      // 單次購買
+      alert(`🎉 ${plan.selectedItem.name}已解鎖！NT$ ${plan.selectedItem.price} (測試模式)`);
+    }
+    
+    setShowSubscriptionPlans(false);
+  }
+};
 export default HealingNoteApp;

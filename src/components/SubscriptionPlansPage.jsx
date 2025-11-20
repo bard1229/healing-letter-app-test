@@ -128,7 +128,7 @@ export const SubscriptionPlansPage = ({
           </button>
         </div>
 
-        <div className="p-6">
+        <div className="p-6 overflow-y-auto flex-1">
           {/* 主標語 */}
           <div 
             className="text-center mb-8 p-6 rounded-2xl"

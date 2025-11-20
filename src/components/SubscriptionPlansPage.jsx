@@ -94,7 +94,7 @@ export const SubscriptionPlansPage = ({
   };
 
   return (
-    <div className="fixed inset-0 bg-black/50 flex items-center justify-center p-4 z-50 overflow-y-auto">
+    <div className="fixed inset-0 bg-black/50 flex items-center justify-center p-4 z-50">
       <div 
         className="w-full max-w-4xl my-8 rounded-3xl shadow-2xl"
         style={{ background: '#FFF9F5' }}

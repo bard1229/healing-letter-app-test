@@ -43,6 +43,7 @@ import { onAuthStateChanged, signOut } from 'firebase/auth';
 import { doc, collection, addDoc, query, where, getDocs, orderBy, setDoc, Timestamp } from 'firebase/firestore';
 import { auth, db } from './firebase';
 import LoginPage from './LoginPage';
+import SubscriptionPlansPage from './components/SubscriptionPlansPage';
 import SettingsPage from './SettingsPage';
 import { generateHealingLetter, generateTrendAnalysis, analyzeEmotion } from './geminiService';
 
@@ -175,6 +176,10 @@ if (typeof document !== 'undefined' && !document.getElementById('tea-warm-styles
 const [showWeeklyReports, setShowWeeklyReports] = useState(false);
 const [selectedReport, setSelectedReport] = useState(null);
 const [weeklyReports, setWeeklyReports] = useState([]);
+const [showSubscriptionPlans, setShowSubscriptionPlans] = useState(false);
+const [userSubscription, setUserSubscription] = useState(null);  
+
+  
 
 // 開發模式 (測試完改成 false)
 const isDevelopment = true;
@@ -626,7 +631,40 @@ const q = query(
         }
       }
     ];
+    // ==================== 訂閱系統函數 ====================
+
+// 選擇方案
+const handleSelectPlan = (plan) => {
+  console.log('選擇方案:', plan);
+  
+  // 測試模式：直接模擬訂閱成功
+  if (isDevelopment) {
+    if (plan.id === 'trial') {
+      // 免費試用
+      setUserSubscription({
+        status: 'trial',
+        plan: 'trial',
+        startDate: new Date().toISOString(),
+        endDate: new Date(Date.now() + 7 * 24 * 60 * 60 * 1000).toISOString()
+      });
+      alert('🎉 免費試用已開通！7 天內可免費查看週報');
+    } else if (plan.id === 'monthly' || plan.id === 'yearly') {
+      // 訂閱方案
+      setUserSubscription({
+        status: 'active',
+        plan: plan.id,
+        startDate: new Date().toISOString(),
+        endDate: new Date(Date.now() + 30 * 24 * 60 * 60 * 1000).toISOString()
+      });
+      alert(`🎉 ${plan.name}訂閱成功！(測試模式)`);
+    } else if (plan.selectedItem) {
+      // 單次購買
+      alert(`🎉 ${plan.selectedItem.name}已解鎖！NT$ ${plan.selectedItem.price} (測試模式)`);
+    }
     
+    setShowSubscriptionPlans(false);
+  }
+};
     setWeeklyReports(initialReports);
     alert('✅ 測試週報已載入! (3份)\n點擊「查看我的成長記錄」開始測試!');
     return;
@@ -908,6 +946,20 @@ const q = query(
                 <div className="text-sm text-gray-600 mt-1">記錄天數 📅</div>
               </div>
             </div>
+{/* 測試訂閱系統按鈕 (開發模式) */}
+{isDevelopment && (
+  <button
+    onClick={() => setShowSubscriptionPlans(true)}
+    className="w-full py-3 rounded-2xl font-medium transition-all hover:shadow-lg mb-4"
+    style={{
+      background: 'linear-gradient(to right, #FFD700, #FFA500)',
+      color: 'white'
+    }}
+  >
+    🧪 測試訂閱系統
+  </button>
+)}
+            
 {/* 週報提示卡片 */}
 <WeeklyReportCard 
   letters={letters}
@@ -1533,9 +1585,10 @@ const q = query(
 {/* 週報列表頁面 */}
 {showWeeklyReports && (
   <WeeklyReportsPage
-    weeklyReports={weeklyReports}  // ← 加這行!
+    weeklyReports={weeklyReports}
     onClose={() => setShowWeeklyReports(false)}
     onViewReport={handleViewReport}
+    onShowSubscription={() => setShowSubscriptionPlans(true)}
   />
 )}
 
@@ -1548,7 +1601,15 @@ const q = query(
     onUnlock={handleUnlockReport}
   />
 )}
-
+{/* 訂閱方案頁面 */}
+{showSubscriptionPlans && (
+  <SubscriptionPlansPage
+    user={user}
+    onClose={() => setShowSubscriptionPlans(false)}
+    onSelectPlan={handleSelectPlan}
+    hasTrial={userSubscription?.status === 'trial'}
+  />
+)}
 {/* 開發者測試面板 */}
 <WeeklyReportTestPanel
   isDevelopment={isDevelopment}

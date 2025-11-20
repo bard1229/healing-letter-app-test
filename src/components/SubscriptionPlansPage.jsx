@@ -36,7 +36,7 @@ export const SubscriptionPlansPage = ({
       id: 'single',
       name: '單次解鎖',
       icon: '💡',
-      description: '先試試報告內容',
+      description: '可試閱報告內容',
       items: [
         { name: '週報', price: 49, period: '份' },
         { name: '月報', price: 79, period: '份' }
@@ -138,7 +138,7 @@ export const SubscriptionPlansPage = ({
               解鎖所有成長報告 ✨
             </h3>
             <p className="text-sm" style={{ color: '#8B7A70' }}>
-              無限週報 + 月報 + 深度分析
+              所有週報 + 月報 + 深度分析
             </p>
           </div>
 

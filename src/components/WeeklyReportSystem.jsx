@@ -159,7 +159,7 @@ export const WeeklyReportCard = ({ letters, onViewReports }) => {
 
 // ==================== 週報列表頁面 ====================
 
-export const WeeklyReportsPage = ({ weeklyReports, onClose, onViewReport }) => {
+export const WeeklyReportsPage = ({ weeklyReports, onClose, onViewReport, onShowSubscription }) => {
   return (
     <div className="fixed inset-0 bg-black/50 flex items-center justify-center p-4 z-50">
       <div 
@@ -225,11 +225,17 @@ export const WeeklyReportsPage = ({ weeklyReports, onClose, onViewReport }) => {
               無限查看所有週報 + 月報
             </p>
             <button 
-              className="w-full py-3 rounded-xl font-medium text-white transition-all hover:shadow-lg"
-              style={{ background: 'linear-gradient(to right, #C9A386, #D4A373)' }}
-            >
-              訂閱 NT$ 149/月 ⭐
-            </button>
+  onClick={() => {
+    onClose();
+    if (onShowSubscription) {
+      onShowSubscription();
+    }
+  }}
+  className="w-full py-3 rounded-xl font-medium text-white transition-all hover:shadow-lg"
+  style={{ background: 'linear-gradient(to right, #C9A386, #D4A373)' }}
+>
+  訂閱 NT$ 149/月 ⭐
+</button>
           </div>
         </div>
       </div>

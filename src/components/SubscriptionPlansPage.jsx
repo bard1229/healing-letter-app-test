@@ -26,7 +26,7 @@ export const SubscriptionPlansPage = ({
       features: [
         '7 天免費試用',
         '包含 1 份完整週報',
-        '體驗所有功能',
+        '體驗所有功能(不含月報)',
         '隨時可升級訂閱'
       ],
       highlight: false,

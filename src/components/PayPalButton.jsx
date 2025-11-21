@@ -106,9 +106,6 @@ export const handlePayPalCallback = (onSuccess, onCancel) => {
   }
 };
 
-// 個別 export（重要！）
-export { generatePayPalURL, redirectToPayPal, PayPalButton, handlePayPalCallback };
-
 // default export
 export default {
   generatePayPalURL,

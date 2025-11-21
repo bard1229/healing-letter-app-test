@@ -367,7 +367,12 @@ const handleClosePayment = () => {
 
     return () => unsubscribe();
   }, []);
-
+useEffect(() => {
+  handlePayPalCallback(
+    handlePaymentSuccess,
+    handlePaymentCancel
+  );
+}, []);
   const loadUserData = async (userId) => {
     try {
       setLoading(true);

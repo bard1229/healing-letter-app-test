@@ -1722,6 +1722,38 @@ const handleSelectPlan = (plan) => {
     onUnlock={handleUnlockReport}
   />
 )}
+  {/* 💳 付款流程 Modal */}
+{paymentFlow.show && paymentFlow.step === 'confirm' && (
+  <PaymentConfirmationModal
+    plan={paymentFlow.plan}
+    onConfirm={handleConfirmPayment}
+    onClose={handleClosePayment}
+  />
+)}
+
+{paymentFlow.show && paymentFlow.step === 'success' && (
+  <PaymentSuccessModal
+    plan={paymentFlow.plan}
+    onClose={handleClosePayment}
+    nextBillingDate={
+      paymentFlow.plan?.period === '月' 
+        ? new Date(Date.now() + 30 * 24 * 60 * 60 * 1000).toLocaleDateString('zh-TW')
+        : paymentFlow.plan?.period === '年'
+        ? new Date(Date.now() + 365 * 24 * 60 * 60 * 1000).toLocaleDateString('zh-TW')
+        : null
+    }
+  />
+)}
+
+{paymentFlow.show && paymentFlow.step === 'error' && (
+  <PaymentErrorModal
+    error={paymentFlow.error}
+    onRetry={handleRetryPayment}
+    onClose={handleClosePayment}
+  />
+)}
+
+// ==================== 完成！====================    
 {/* 訂閱方案頁面 */}
 {showSubscriptionPlans && (
   <SubscriptionPlansPage

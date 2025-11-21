@@ -1722,7 +1722,8 @@ const handleSelectPlan = (plan) => {
     onUnlock={handleUnlockReport}
   />
 )}
-  {/* 💳 付款流程 Modal */}
+
+      {/* 💳 付款流程 Modal */}
 {paymentFlow.show && paymentFlow.step === 'confirm' && (
   <PaymentConfirmationModal
     plan={paymentFlow.plan}
@@ -1753,7 +1754,7 @@ const handleSelectPlan = (plan) => {
   />
 )}
 
-// ==================== 完成！====================    
+// ==================== 完成！==================== 
 {/* 訂閱方案頁面 */}
 {showSubscriptionPlans && (
   <SubscriptionPlansPage

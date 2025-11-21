@@ -218,6 +218,112 @@ const isDevelopment = true;
     { emoji: '🥰', label: '感動', value: '感動' },
     { emoji: '😎', label: '自信', value: '自信' }
   ];
+// 💰 付款處理函數
+const handleStartPayment = (plan) => {
+  console.log('選擇方案:', plan);
+  setPaymentFlow({
+    show: true,
+    step: 'confirm',
+    plan: plan,
+    error: null
+  });
+};
+
+const handleConfirmPayment = async (plan) => {
+  try {
+    localStorage.setItem('pendingPayment', JSON.stringify(plan));
+    redirectToPayPal(plan);
+  } catch (error) {
+    console.error('付款錯誤:', error);
+    setPaymentFlow(prev => ({
+      ...prev,
+      step: 'error',
+      error: error.message || '付款過程發生錯誤，請稍後再試'
+    }));
+  }
+};
+
+const handlePaymentSuccess = async (paymentData) => {
+  try {
+    const pendingPayment = localStorage.getItem('pendingPayment');
+    const plan = pendingPayment ? JSON.parse(pendingPayment) : null;
+
+    if (!plan) {
+      throw new Error('找不到訂單資訊');
+    }
+
+    const userRef = doc(db, 'users', user.uid);
+    await setDoc(userRef, {
+      subscription: {
+        planId: plan.id,
+        status: 'active',
+        startDate: new Date(),
+        paymentId: paymentData.transactionId,
+        provider: 'paypal',
+        amount: paymentData.amount
+      }
+    }, { merge: true });
+
+    if (plan.id === 'single') {
+      console.log('解鎖報告:', plan.selectedItem.name);
+    }
+
+    setUserSubscription({
+      planId: plan.id,
+      status: 'active',
+      startDate: new Date()
+    });
+
+    localStorage.removeItem('pendingPayment');
+
+    setPaymentFlow({
+      show: true,
+      step: 'success',
+      plan: plan,
+      error: null
+    });
+
+  } catch (error) {
+    console.error('處理付款成功失敗:', error);
+    setPaymentFlow({
+      show: true,
+      step: 'error',
+      plan: null,
+      error: '訂閱啟用失敗，請聯繫客服'
+    });
+  }
+};
+
+const handlePaymentCancel = () => {
+  const pendingPayment = localStorage.getItem('pendingPayment');
+  const plan = pendingPayment ? JSON.parse(pendingPayment) : null;
+
+  setPaymentFlow({
+    show: true,
+    step: 'error',
+    plan: plan,
+    error: '您已取消付款'
+  });
+
+  localStorage.removeItem('pendingPayment');
+};
+
+const handleRetryPayment = () => {
+  setPaymentFlow(prev => ({
+    ...prev,
+    step: 'confirm',
+    error: null
+  }));
+};
+
+const handleClosePayment = () => {
+  setPaymentFlow({
+    show: false,
+    step: null,
+    plan: null,
+    error: null
+  });
+};
 
   // 🔧 修改後的登入檢查 - 同時支援 Firebase Auth 和 LINE 登入
   useEffect(() => {

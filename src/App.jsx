@@ -1616,7 +1616,7 @@ const handleSelectPlan = (plan) => {
   <SubscriptionPlansPage
     user={user}
     onClose={() => setShowSubscriptionPlans(false)}
-    onSelectPlan={handleSelectPlan}
+    onSelectPlan={handleStartPayment}
     hasTrial={userSubscription?.status === 'trial'}
   />
 )}

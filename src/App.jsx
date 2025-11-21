@@ -46,7 +46,12 @@ import LoginPage from './LoginPage';
 import SubscriptionPlansPage from './components/SubscriptionPlansPage';
 import SettingsPage from './SettingsPage';
 import { generateHealingLetter, generateTrendAnalysis, analyzeEmotion } from './geminiService';
-
+import { 
+  PaymentConfirmationModal,
+  PaymentSuccessModal,
+  PaymentErrorModal
+} from './components/PaymentFlow';
+import { handlePayPalCallback, redirectToPayPal } from './components/PayPalButton';
 // 水獺圖片
 const OTTER_IMAGE = '/otter.png';
 
@@ -178,7 +183,12 @@ const [selectedReport, setSelectedReport] = useState(null);
 const [weeklyReports, setWeeklyReports] = useState([]);
 const [showSubscriptionPlans, setShowSubscriptionPlans] = useState(false);
 const [userSubscription, setUserSubscription] = useState(null);  
-
+const [paymentFlow, setPaymentFlow] = useState({
+  show: false,
+  step: null,
+  plan: null,
+  error: null
+});
   
 
 // 開發模式 (測試完改成 false)

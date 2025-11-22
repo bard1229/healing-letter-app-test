@@ -1042,8 +1042,8 @@ const handleSelectPlan = (plan) => {
             <div className="grid grid-cols-3 gap-4 mb-6">
               {/* 總記錄 - 淺藍色 */}
               <div 
-                className="backdrop-blur-sm rounded-2xl shadow-md p-4 text-center transition-all hover:shadow-lg hover:scale-105"
-                style={{ background: '#EFF6FF' }}
+                className="rounded-2xl shadow-md p-4 text-center transition-all hover:shadow-lg hover:scale-105"
+                style={{ background: '#F5EDE7' }}
               >
                 <div className="text-3xl font-bold" style={{ color: '#3B82F6' }}>{letters.length}</div>
                 <div className="text-sm mt-1 text-gray-600">總記錄 📝</div>
@@ -1051,8 +1051,8 @@ const handleSelectPlan = (plan) => {
               
               {/* 連續天數 - 淺藍色 */}
               <div 
-                className="backdrop-blur-sm rounded-2xl shadow-md p-4 text-center transition-all hover:shadow-lg hover:scale-105"
-                style={{ background: '#EFF6FF' }}
+                className="rounded-2xl shadow-md p-4 text-center transition-all hover:shadow-lg hover:scale-105"
+                style={{ background: '#F5EDE7' }}
               >
                 <div className="text-3xl font-bold" style={{ color: '#3B82F6' }}>{checkConsecutiveDays(letters)}</div>
                 <div className="text-sm mt-1 text-gray-600">連續天數 🔥</div>
@@ -1060,8 +1060,8 @@ const handleSelectPlan = (plan) => {
               
               {/* 記錄天數 - 淺藍色 */}
               <div 
-                className="backdrop-blur-sm rounded-2xl shadow-md p-4 text-center transition-all hover:shadow-lg hover:scale-105"
-                style={{ background: '#EFF6FF' }}
+                className="rounded-2xl shadow-md p-4 text-center transition-all hover:shadow-lg hover:scale-105"
+                style={{ background: '#F5EDE7' }}
               >
                 <div className="text-3xl font-bold text-blue-600">{totalDays}</div>
                 <div className="text-sm text-gray-600 mt-1">記錄天數 📅</div>

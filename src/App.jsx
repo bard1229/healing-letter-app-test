@@ -1602,65 +1602,62 @@ const handleSelectPlan = (plan) => {
                 </div>
               ) : (
                 getFilteredLetters().slice().reverse().map((letter) => (
-                  <div
-  key={letter.id}
-  className="bg-white/80 backdrop-blur-sm rounded-2xl shadow-md p-6 hover:shadow-lg transition-all"
->
-  {/* 原本的內容 */}
-  <div className="flex justify-between items-start mb-3">
-    <span className="text-sm text-gray-500">
-      📅 {new Date(letter.date).toLocaleDateString('zh-TW', {
-        year: 'numeric',
-        month: 'long',
-        day: 'numeric'
-      })}
-    </span>
-    <div className="flex gap-2">
-      {letter.emotion && (
-        <span className="text-sm px-3 py-1 bg-purple-100 text-purple-700 rounded-full">
-          {emotionEmojis[letter.emotion] || '💭'} {letter.emotion}
-        </span>
-      )}
-      {/* 🆕 編輯按鈕 */}
-      <button
-        onClick={(e) => {
-          e.stopPropagation();
-          handleEditLetter(letter);
-        }}
-        className="px-3 py-1 rounded-full text-sm font-medium transition-all hover:shadow-md"
-        style={{ background: '#FFD700', color: '#5A4A42' }}
-      >
-        ✏️ 編輯
-      </button>
-    </div>
-  </div>
-  
-  {/* 點擊卡片查看詳細 */}
-  <div 
-    onClick={() => {
-      setCurrentLetter(letter);
-      setShowHistory(false);
-    }}
-    className="cursor-pointer"
+  <div
+    key={letter.id}
+    className="bg-white/80 backdrop-blur-sm rounded-2xl shadow-md p-6 hover:shadow-lg transition-all"
   >
-    <div className="mb-2">
-      <p className="text-xs text-gray-500 mb-1">💭 你說:</p>
-      <p className="text-gray-700 font-medium line-clamp-2">
-        {highlightKeyword(letter.userInput)}
-      </p>
+    <div className="flex justify-between items-start mb-3">
+      <span className="text-sm text-gray-500">
+        📅 {new Date(letter.date).toLocaleDateString('zh-TW', {
+          year: 'numeric',
+          month: 'long',
+          day: 'numeric'
+        })}
+      </span>
+      <div className="flex gap-2">
+        {letter.emotion && (
+          <span className="text-sm px-3 py-1 bg-purple-100 text-purple-700 rounded-full">
+            {emotionEmojis[letter.emotion] || '💭'} {letter.emotion}
+          </span>
+        )}
+        <button
+          onClick={(e) => {
+            e.stopPropagation();
+            handleEditLetter(letter);
+          }}
+          className="px-3 py-1 rounded-full text-sm font-medium transition-all hover:shadow-md"
+          style={{ background: '#FFD700', color: '#5A4A42' }}
+        >
+          ✏️ 編輯
+        </button>
+      </div>
     </div>
-    {letter.content && (
-      <div>
-        <p className="text-xs text-gray-500 mb-1">💌 歐特說:</p>
-        <p className="text-gray-600 text-sm italic line-clamp-3">
-          {highlightKeyword(letter.content?.substring(0, 150))}...
+    
+    <div 
+      onClick={() => {
+        setCurrentLetter(letter);
+        setShowHistory(false);
+      }}
+      className="cursor-pointer"
+    >
+      <div className="mb-2">
+        <p className="text-xs text-gray-500 mb-1">💭 你說:</p>
+        <p className="text-gray-700 font-medium line-clamp-2">
+          {highlightKeyword(letter.userInput)}
         </p>
       </div>
-    )}
-    <p className="text-xs text-purple-600 mt-2">點擊查看完整內容 →</p>
+      {letter.content && (
+        <div>
+          <p className="text-xs text-gray-500 mb-1">💌 歐特說:</p>
+          <p className="text-gray-600 text-sm italic line-clamp-3">
+            {highlightKeyword(letter.content?.substring(0, 150))}...
+          </p>
+        </div>
+      )}
+      <p className="text-xs text-purple-600 mt-2">點擊查看完整內容 →</p>
     </div>
   </div>
-))}
+))
                     <div className="flex justify-between items-start mb-3">
                       <span className="text-sm text-gray-500">
                         📅 {new Date(letter.date).toLocaleDateString('zh-TW', {

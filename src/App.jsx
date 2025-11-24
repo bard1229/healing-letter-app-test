@@ -197,7 +197,10 @@ const [paymentFlow, setPaymentFlow] = useState({
   plan: null,
   error: null
 });
-  
+// 月報相關狀態
+const [showMonthlyReports, setShowMonthlyReports] = useState(false);
+const [selectedMonthlyReport, setSelectedMonthlyReport] = useState(null);
+const [monthlyReports, setMonthlyReports] = useState([]);  
 
 // 開發模式 (測試完改成 false)
 const isDevelopment = true;

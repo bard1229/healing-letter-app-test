@@ -603,12 +603,21 @@ const q = query(
   setIsGenerating(true);
 
   try {
-    // 保存到 letters 集合 (舊路徑)
+    // 🤖 AI 自動判斷情緒（如果使用者沒選）
+    let finalEmotion = selectedEmotion;
+    
+    if (!finalEmotion || finalEmotion === '') {
+      console.log('🤖 使用者未選擇情緒，啟動 AI 自動判斷...');
+      finalEmotion = await analyzeEmotion(input);
+      console.log('🤖 AI 判斷結果:', finalEmotion);
+    }
+
+    // 保存到 letters 集合
     await addDoc(collection(db, 'letters'), {
       userId: user.uid,
       userInput: input,
       content: "",
-      emotion: selectedEmotion || "未分類",
+      emotion: finalEmotion,
       createdAt: Timestamp.now(),
       timestamp: Date.now()
     });

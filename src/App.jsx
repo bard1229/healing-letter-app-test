@@ -1177,6 +1177,13 @@ const handleSelectPlan = (plan) => {
   letters={letters}
   onViewReports={() => setShowWeeklyReports(true)}
 />
+            
+{/* 📈 月報提示卡片 */}
+<MonthlyReportCard
+  letters={letters}
+  onViewReports={() => setShowMonthlyReports(true)}
+/>
+            
             {/* 當前信件顯示 */}
             {currentLetter ? (
               <div className="bg-white/90 backdrop-blur-sm rounded-3xl shadow-xl p-8 mb-6 animate-fade-in">

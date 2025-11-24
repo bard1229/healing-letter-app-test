@@ -1658,20 +1658,7 @@ const handleSelectPlan = (plan) => {
     </div>
   </div>
 ))
-                    <div className="flex justify-between items-start mb-3">
-                      <span className="text-sm text-gray-500">
-                        📅 {new Date(letter.date).toLocaleDateString('zh-TW', {
-                          year: 'numeric',
-                          month: 'long',
-                          day: 'numeric'
-                        })}
-                      </span>
-                      {letter.emotion && (
-                        <span className="text-sm px-3 py-1 bg-purple-100 text-purple-700 rounded-full">
-                          {emotionEmojis[letter.emotion] || '💭'} {letter.emotion}
-                        </span>
-                      )}
-                    </div>
+                    
                     <div className="mb-2">
                       <p className="text-xs text-gray-500 mb-1">💭 你說:</p>
                       <p className="text-gray-700 font-medium line-clamp-2">

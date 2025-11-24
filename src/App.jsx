@@ -793,6 +793,56 @@ const handleSaveEdit = (updatedLetter) => {
         }
       }
     ];
+    // 領取月報
+const handleClaimMonthlyReport = (reportId) => {
+  console.log('領取月報:', reportId);
+  setMonthlyReports(prev => 
+    prev.map(report => 
+      report.id === reportId 
+        ? { ...report, status: 'claimed' }
+        : report
+    )
+  );
+  alert('月報已領取！可以解鎖查看了 ✨');
+  setSelectedMonthlyReport(null);
+};
+
+// 解鎖月報 (目前只是測試，未接金流)
+const handleUnlockMonthlyReport = (reportId) => {
+  const reportToUnlock = monthlyReports.find(r => r.id === reportId);
+  if (!reportToUnlock) return;
+  
+  const unlockedReport = {
+    ...reportToUnlock,
+    status: 'paid',
+    paidAt: new Date().toISOString()
+  };
+  
+  setMonthlyReports(prev => 
+    prev.map(report => 
+      report.id === reportId ? unlockedReport : report
+    )
+  );
+  
+  setSelectedMonthlyReport(unlockedReport);
+  alert('🧪 測試解鎖成功！(實際需接金流)');
+};
+
+// 查看月報
+const handleViewMonthlyReport = (report) => {
+  setSelectedMonthlyReport(report);
+};
+
+// 建立測試月報 (開發用)
+const handleCreateTestMonthlyReport = () => {
+  if (monthlyReports.length === 0) {
+    const initialReports = createTestMonthlyReports();
+    setMonthlyReports(initialReports);
+    alert('✅ 已建立測試月報！點「月報記錄」查看');
+  } else {
+    alert('📊 測試月報已存在');
+  }
+};
     // ==================== 訂閱系統函數 ====================
 
 // 選擇方案

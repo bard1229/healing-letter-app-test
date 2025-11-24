@@ -52,6 +52,7 @@ import {
   PaymentErrorModal
 } from './components/PaymentFlow';
 import { handlePayPalCallback, redirectToPayPal } from './components/PayPalButton';
+import DiaryEditModal from './components/DiaryEditModal';
 // 水獺圖片
 const OTTER_IMAGE = '/otter.png';
 

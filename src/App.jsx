@@ -793,7 +793,7 @@ const handleSaveEdit = (updatedLetter) => {
         }
       }
     ];
-    // 領取月報
+// 領取月報
 const handleClaimMonthlyReport = (reportId) => {
   console.log('領取月報:', reportId);
   setMonthlyReports(prev => 

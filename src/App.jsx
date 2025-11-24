@@ -1863,6 +1863,14 @@ const handleSelectPlan = (plan) => {
     </div>
   );
 };
+// 📝 日記編輯 Modal
+{editingLetter && (
+  <DiaryEditModal
+    letter={editingLetter}
+    onClose={() => setEditingLetter(null)}
+    onSave={handleSaveEdit}
+  />
+)}
 // ==================== 訂閱系統函數 ====================
 
 // 選擇方案

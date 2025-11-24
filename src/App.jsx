@@ -1659,22 +1659,7 @@ const handleSelectPlan = (plan) => {
   </div>
 ))
                     
-                    <div className="mb-2">
-                      <p className="text-xs text-gray-500 mb-1">💭 你說:</p>
-                      <p className="text-gray-700 font-medium line-clamp-2">
-                        {highlightKeyword(letter.userInput)}
-                      </p>
-                    </div>
-                    {/* 🔧 顯示療癒信預覽 */}
-                    <div>
-                      <p className="text-xs text-gray-500 mb-1">💌 歐特說:</p>
-                      <p className="text-gray-600 text-sm italic line-clamp-3">
-                        {highlightKeyword(letter.content?.substring(0, 150))}...
-                      </p>
-                    </div>
-                    <p className="text-xs text-purple-600 mt-2">點擊查看完整內容 →</p>
-                  </div>
-                ))
+                    
               )}
             </div>
           </div>

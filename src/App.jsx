@@ -639,6 +639,27 @@ const q = query(
     setIsGenerating(false);
   }
 };
+  // 📝 處理編輯日記
+const handleEditLetter = (letter) => {
+  setEditingLetter(letter);
+};
+
+// 📝 處理編輯儲存
+const handleSaveEdit = (updatedLetter) => {
+  // 更新本地 letters 狀態
+  setLetters(prevLetters => 
+    prevLetters.map(letter => 
+      letter.id === updatedLetter.id ? updatedLetter : letter
+    )
+  );
+  
+  // 如果正在查看這封信，也更新 currentLetter
+  if (currentLetter?.id === updatedLetter.id) {
+    setCurrentLetter(updatedLetter);
+  }
+  
+  setEditingLetter(null);
+};
 // ==================== 週報系統函數 ====================
   
   // 領取週報

@@ -1870,6 +1870,31 @@ const handleSelectPlan = (plan) => {
     onUnlock={handleUnlockReport}
   />
 )}
+{/* 月報列表頁面 */}
+{showMonthlyReports && (
+  <MonthlyReportsPage
+    monthlyReports={monthlyReports}
+    onClose={() => setShowMonthlyReports(false)}
+    onViewReport={handleViewMonthlyReport}
+    onShowSubscription={() => setShowSubscriptionPlans(true)}
+  />
+)}
+
+{/* 月報詳細內容頁面 */}
+{selectedMonthlyReport && (
+  <MonthlyReportDetailPage
+    report={selectedMonthlyReport}
+    onClose={() => setSelectedMonthlyReport(null)}
+    onClaim={handleClaimMonthlyReport}
+    onUnlock={handleUnlockMonthlyReport}
+  />
+)}
+
+{/* 月報測試面板 */}
+<MonthlyReportTestPanel
+  isDevelopment={isDevelopment}
+  onCreateTestReport={handleCreateTestMonthlyReport}
+/>
 
       {/* 💳 付款流程 Modal */}
 {paymentFlow.show && paymentFlow.step === 'confirm' && (

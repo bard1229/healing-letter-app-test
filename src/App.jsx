@@ -178,6 +178,7 @@ if (typeof document !== 'undefined' && !document.getElementById('tea-warm-styles
   const [selectedEmotion, setSelectedEmotion] = useState('');
   const [showEmotionSelector, setShowEmotionSelector] = useState(false);
   const [searchKeyword, setSearchKeyword] = useState('');
+  const [editingLetter, setEditingLetter] = useState(null);
 // 週報相關狀態
 const [showWeeklyReports, setShowWeeklyReports] = useState(false);
 const [selectedReport, setSelectedReport] = useState(null);

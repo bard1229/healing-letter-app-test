@@ -1658,8 +1658,9 @@ const handleSelectPlan = (plan) => {
       </div>
     )}
     <p className="text-xs text-purple-600 mt-2">點擊查看完整內容 →</p>
+    </div>
   </div>
-</div>
+))}
                     <div className="flex justify-between items-start mb-3">
                       <span className="text-sm text-gray-500">
                         📅 {new Date(letter.date).toLocaleDateString('zh-TW', {

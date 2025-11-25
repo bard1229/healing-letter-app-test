@@ -832,14 +832,61 @@ const handleViewMonthlyReport = (report) => {
   setSelectedMonthlyReport(report);
 };
 
-// 建立測試月報 (開發用)
+// 建立測試月報（開發用）
 const handleCreateTestMonthlyReport = () => {
+  // 如果是第一次點擊，先載入完整測試資料
   if (monthlyReports.length === 0) {
-    const initialReports = createTestMonthlyReports();
+    const initialReports = [
+      {
+        id: 'month_2025_11',
+        month: 11,
+        year: 2025,
+        monthStart: '2025-11-01',
+        monthEnd: '2025-11-30',
+        totalDiaries: 15,
+        status: 'pending',
+        generatedAt: new Date().toISOString(),
+        content: {
+          overview: '本月你記錄了 15 天的心情，從這一個月的紀錄看來，你似乎正處在一個相對平穩但也在思考人生方向的階段。',
+          suggestions: [
+            '持續保持自我覺察的習慣',
+            '可以嘗試建立更固定的放鬆儀式',
+            '在感到迷茫時，寫下三個可以採取的小行動'
+          ],
+          highlights: {
+            mostFrequent: { emotion: '平靜', emoji: '😌', count: 6 },
+            moodStability: '穩定向上',
+            growth: '+25%'
+          },
+          encouragement: '這個月的你展現了很好的情緒穩定度，繼續保持這份對內在的關注。'
+        }
+      },
+      {
+        id: 'month_2025_10',
+        month: 10,
+        year: 2025,
+        monthStart: '2025-10-01',
+        monthEnd: '2025-10-31',
+        totalDiaries: 12,
+        status: 'claimed',
+        generatedAt: new Date(Date.now() - 30 * 24 * 60 * 60 * 1000).toISOString(),
+        content: {
+          overview: '十月份你記錄了 12 天，這個月的情緒波動較大。',
+          suggestions: ['注意休息', '適時尋求支持', '保持運動習慣'],
+          highlights: {
+            mostFrequent: { emotion: '焦慮', emoji: '😰', count: 5 },
+            moodStability: '波動較大',
+            growth: '-10%'
+          },
+          encouragement: '雖然這個月比較辛苦，但你一直在努力面對。'
+        }
+      }
+    ];
+    
     setMonthlyReports(initialReports);
     alert('✅ 已建立測試月報！點「月報記錄」查看');
   } else {
-    alert('📊 測試月報已存在');
+    alert('📊 測試資料已存在！');
   }
 };
     // ==================== 訂閱系統函數 ====================

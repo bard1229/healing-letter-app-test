@@ -792,6 +792,13 @@ const handleSaveEdit = (updatedLetter) => {
         }
       }
     ];
+
+    setWeeklyReports(initialReports);
+    alert('✅ 已建立測試週報！點「週報記錄」查看');
+  } else {
+    alert('📊 測試週報已存在！');
+  }
+};
 // 領取月報
 const handleClaimMonthlyReport = (reportId) => {
   console.log('領取月報:', reportId);

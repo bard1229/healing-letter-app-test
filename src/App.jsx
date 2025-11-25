@@ -1911,6 +1911,15 @@ const handleSelectPlan = (plan) => {
   isDevelopment={isDevelopment}
   onCreateTestReport={handleCreateTestReport}
 />
+
+// 📝 日記編輯 Modal
+{editingLetter && (
+  <DiaryEditModal
+    letter={editingLetter}
+    onClose={() => setEditingLetter(null)}
+    onSave={handleSaveEdit}
+  />
+)}      
       <style jsx>{`
         @keyframes fade-in {
           from { opacity: 0; transform: translateY(10px); }
@@ -1923,14 +1932,7 @@ const handleSelectPlan = (plan) => {
     </div>
   );
 };
-// 📝 日記編輯 Modal
-{editingLetter && (
-  <DiaryEditModal
-    letter={editingLetter}
-    onClose={() => setEditingLetter(null)}
-    onSave={handleSaveEdit}
-  />
-)}
+
 // ==================== 訂閱系統函數 ====================
 
 // 選擇方案

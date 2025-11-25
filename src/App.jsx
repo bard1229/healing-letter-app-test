@@ -41,7 +41,6 @@ import {
   MonthlyReportsPage, 
   MonthlyReportDetailPage,
   MonthlyReportTestPanel,
-  MonthlyReportTestPanel
 } from './components/MonthlyReportSystem';
 import React, { useState, useEffect } from 'react';
 import { Heart, Mic, Send, Clock, TrendingUp, Mail, Sparkles, Home, ArrowLeft, LogOut, Calendar, BarChart3, ChevronLeft, ChevronRight, AlertCircle, Share2, Facebook, Twitter, Instagram, Settings } from 'lucide-react';

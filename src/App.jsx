@@ -834,7 +834,7 @@ const handleViewMonthlyReport = (report) => {
 };
 
 // 建立測試月報（開發用）
-const handleCreateTestMonthlyReport = () => {
+function handleCreateTestMonthlyReport() {
   // 如果是第一次點擊，先載入完整測試資料
   if (monthlyReports.length === 0) {
     const initialReports = [

@@ -1974,10 +1974,11 @@ const handleSelectPlan = (plan) => {
 {paymentFlow.show && paymentFlow.step === 'confirm' && (
   <div className="fixed inset-0 z-[110]">  {/* 加這層，z-index 比訂閱方案高 */}
     <PaymentConfirmationModal
-    plan={paymentFlow.plan}
-    onConfirm={handleConfirmPayment}
-    onClose={handleClosePayment}
-  />
+      plan={paymentFlow.plan}
+      onConfirm={handleConfirmPayment}
+      onClose={handleClosePayment}
+    />
+  </div>
 )}
 
 {paymentFlow.show && paymentFlow.step === 'success' && (

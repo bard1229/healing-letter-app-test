@@ -1250,6 +1250,7 @@ const handleSelectPlan = (plan) => {
     ✏️ 編輯
   </button>
 </div>
+</div>                  
                     <p className="text-sm text-gray-500">
                       📅 {new Date(currentLetter.date).toLocaleDateString('zh-TW', {
                         year: 'numeric',

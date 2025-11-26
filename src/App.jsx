@@ -1565,7 +1565,7 @@ const handleSelectPlan = (plan) => {
                   className="bg-white/80 backdrop-blur-sm rounded-2xl shadow-md p-6 hover:shadow-lg transition-all cursor-pointer"
                   onClick={() => {
                     setCurrentLetter(letter);
-                    setShowCalendar(false);
+                  //setShowCalendar(false);//
                     setShowDayDetail(false);
                   }}
                 >

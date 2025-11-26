@@ -1267,7 +1267,7 @@ const handleSelectPlan = (plan) => {
                 </div>
 
                 <div className="bg-gradient-to-br from-purple-50 to-pink-50 rounded-2xl p-6 mb-6">
-                  <p className="text-sm text-gray-600 mb-2">💭 你說:</p>
+                  <p className="text-sm text-gray-600 mb-2">💬 你說:</p>
                   <p className="text-gray-700 italic">"{currentLetter.userInput}"</p>
                 </div>
 

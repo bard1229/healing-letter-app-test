@@ -922,8 +922,16 @@ const handleSelectPlan = (plan) => {
     }
     
     setShowSubscriptionPlans(false);
+  } else {
+    // 正式模式：顯示付款流程
+    setPaymentFlow({
+      show: true,
+      step: 'confirm',
+      plan: plan,
+      error: null
+    });
   }
-};
+};  // ← handleSelectPlan 函數結束
     setWeeklyReports(initialReports);
     alert('✅ 測試週報已載入! (3份)\n點擊「查看我的成長記錄」開始測試!');
     return;

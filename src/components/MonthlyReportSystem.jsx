@@ -602,10 +602,3 @@ export const MonthlyReportTestPanel = ({ onCreateTestReport, isDevelopment }) =>
   );
 };
 
-export default {
-  MonthlyReportCard,
-  MonthlyReportsPage,
-  MonthlyReportDetailPage,
-  MonthlyReportTestPanel,
-  createTestMonthlyReports
-};

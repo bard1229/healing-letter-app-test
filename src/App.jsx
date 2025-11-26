@@ -896,13 +896,6 @@ function handleCreateTestMonthlyReport() {
 const handleSelectPlan = (plan) => {
   console.log('選擇方案:', plan);
 
-  setPaymentFlow({
-    show: true,
-    step: 'confirm',
-    plan: plan,  // ← 確認這裡有傳入
-    error: null
-  });
-};
   // 測試模式：直接模擬訂閱成功
   if (isDevelopment) {
     if (plan.id === 'trial') {

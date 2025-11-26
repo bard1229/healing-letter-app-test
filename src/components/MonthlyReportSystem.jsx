@@ -102,7 +102,7 @@ export const MonthlyReportCard = ({ letters, onViewReports }) => {
         </span>
       </div>
       
-      {/* 進度條 */}
+      { 進度條 }
 <div className="w-full bg-gray-200 rounded-full h-2 overflow-hidden">
   <div 
     className="h-full rounded-full transition-all"

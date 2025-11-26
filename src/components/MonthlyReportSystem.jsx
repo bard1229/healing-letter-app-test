@@ -591,12 +591,16 @@ export const MonthlyReportTestPanel = ({ onCreateTestReport, isDevelopment }) =>
       >
         <p className="text-white text-xs font-bold mb-2">🧪 月報測試面板</p>
         <button
-          onClick={onCreateTestReport}
-          className="w-full py-2 px-4 rounded-xl text-sm font-medium bg-white hover:bg-gray-100 transition-all"
-          style={{ color: '#4ADE80' }}
-        >
-          建立測試月報
-        </button>
+  onClick={() => {
+    if (onCreateTestReport) {
+      onCreateTestReport();
+    }
+  }}
+  className="w-full py-2 px-4 rounded-xl text-sm font-medium bg-white hover:bg-gray-100 transition-all"
+  style={{ color: '#4ADE80' }}
+>
+  建立測試月報
+</button>
       </div>
     </div>
   );

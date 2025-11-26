@@ -584,7 +584,7 @@ export const MonthlyReportTestPanel = ({ onCreateTestReport, isDevelopment }) =>
   if (!isDevelopment) return null;
 
   return (
-    <div className="fixed bottom-26 right-4 z-50">
+    <div className="fixed bottom-24 right-4 z-50">
       <div 
         className="p-4 rounded-2xl shadow-2xl"
         style={{ background: '#4ADE80' }}

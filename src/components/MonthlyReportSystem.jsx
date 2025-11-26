@@ -103,15 +103,15 @@ export const MonthlyReportCard = ({ letters, onViewReports }) => {
       </div>
       
       {/* 進度條 */}
-      <div className="w-full h-3 rounded-full mb-4" style={{ background: '#E8D4C4' }}>
-        <div 
-          className="h-3 rounded-full transition-all duration-500"
-          style={{ 
-            background: 'linear-gradient(to right, #C9A386, #D4A373)',
-            width: `${percentage}%`
-          }}
-        />
-      </div>
+<div className="w-full bg-gray-200 rounded-full h-2 overflow-hidden">
+  <div 
+    className="h-full rounded-full transition-all"
+    style={{ 
+      width: `${Math.min(percentage, 100)}%`,  // ← 加 Math.min 限制最大 100%
+      background: 'linear-gradient(to right, #C9A386, #D4A373)'
+    }}
+  />
+</div>
       
       <p className="text-sm mb-4" style={{ color: '#8B7A70' }}>
         💡 每月 1 號早上 8:00 會生成上月的成長報告

@@ -1235,22 +1235,11 @@ const handleSelectPlan = (plan) => {
             {currentLetter ? (
               <div className="bg-white/90 backdrop-blur-sm rounded-3xl shadow-xl p-8 mb-6 animate-fade-in">
                 <div className="flex justify-between items-start mb-6">
-  <div>
-    <div className="flex items-center gap-2 mb-2">
-      <Heart className="text-purple-600" size={24} />
-      <h2 className="text-xl font-medium text-gray-800">我的專屬日記 📖</h2>
-    </div>
-    
-  {/* 編輯按鈕 */}
-  <button
-    onClick={() => handleEditLetter(currentLetter)}
-    className="px-4 py-2 rounded-full text-sm font-medium transition-all hover:shadow-md"
-    style={{ background: '#FFD700', color: '#5A4A42' }}
-  >
-    ✏️ 編輯
-  </button>
-</div>
-</div>                  
+                  <div>
+                    <div className="flex items-center gap-2 mb-2">
+                      <Heart className="text-purple-600" size={24} />
+                      <h2 className="text-xl font-medium text-gray-800">我的專屬日記 📖</h2>
+                    </div>
                     <p className="text-sm text-gray-500">
                       📅 {new Date(currentLetter.date).toLocaleDateString('zh-TW', {
                         year: 'numeric',
@@ -1261,6 +1250,17 @@ const handleSelectPlan = (plan) => {
                       })}
                     </p>
                   </div>
+                  {/* 編輯按鈕 */}
+                  <button
+                    onClick={() => handleEditLetter(currentLetter)}
+                    className="px-4 py-2 rounded-full text-sm font-medium transition-all hover:shadow-md"
+                    style={{ background: '#FFD700', color: '#5A4A42' }}
+                  >
+                    ✏️ 編輯
+                  </button>
+                </div>
+                
+                <div className="mb-4">
                   {currentLetter.emotion && (
                     <span className="px-4 py-2 bg-purple-100 text-purple-700 rounded-full text-sm font-medium">
                       {emotionEmojis[currentLetter.emotion] || '💬'} {currentLetter.emotion}

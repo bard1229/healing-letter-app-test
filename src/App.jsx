@@ -1897,13 +1897,41 @@ const handleSelectPlan = (plan) => {
 />
 )}
 
-{/* 月報詳細內容頁面 */}
 {selectedMonthlyReport && (
   <MonthlyReportDetailPage
     report={selectedMonthlyReport}
     onClose={() => setSelectedMonthlyReport(null)}
-    onClaim={handleClaimMonthlyReport}
-    onUnlock={handleUnlockMonthlyReport}
+    onClaim={(reportId) => {
+      console.log('領取月報:', reportId);
+      setMonthlyReports(prev =>
+        prev.map(report =>
+          report.id === reportId
+            ? { ...report, status: 'claimed' }
+            : report
+        )
+      );
+      alert('✅ 月報已領取！可以解鎖查看了 ✨');
+      setSelectedMonthlyReport(null);
+    }}
+    onUnlock={(reportId) => {
+      const reportToUnlock = monthlyReports.find(r => r.id === reportId);
+      if (!reportToUnlock) return;
+      
+      const unlockedReport = {
+        ...reportToUnlock,
+        status: 'paid',
+        paidAt: new Date().toISOString()
+      };
+      
+      setMonthlyReports(prev =>
+        prev.map(report =>
+          report.id === reportId ? unlockedReport : report
+        )
+      );
+      
+      setSelectedMonthlyReport(unlockedReport);
+      alert('🧪 測試解鎖成功！(實際需接金流)');
+    }}
   />
 )}
 

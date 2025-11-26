@@ -1907,11 +1907,13 @@ const handleSelectPlan = (plan) => {
   />
 )}
 
-{/* 月報測試面板 */}
+{/* 月報測試面板 - 暫時停用 */}
+{/* 
 <MonthlyReportTestPanel
   isDevelopment={isDevelopment}
   onCreateTestReport={handleCreateTestMonthlyReport}
 />
+*/}
 
       {/* 💳 付款流程 Modal */}
 {paymentFlow.show && paymentFlow.step === 'confirm' && (

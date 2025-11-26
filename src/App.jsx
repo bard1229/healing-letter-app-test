@@ -1240,7 +1240,7 @@ const handleSelectPlan = (plan) => {
       <Heart className="text-purple-600" size={24} />
       <h2 className="text-xl font-medium text-gray-800">我的專屬日記 📖</h2>
     </div>
-  </div>
+    
   {/* 編輯按鈕 */}
   <button
     onClick={() => handleEditLetter(currentLetter)}

@@ -1261,7 +1261,7 @@ const handleSelectPlan = (plan) => {
                   </div>
                   {currentLetter.emotion && (
                     <span className="px-4 py-2 bg-purple-100 text-purple-700 rounded-full text-sm font-medium">
-                      {emotionEmojis[currentLetter.emotion] || '💭'} {currentLetter.emotion}
+                      {emotionEmojis[currentLetter.emotion] || '💬'} {currentLetter.emotion}
                     </span>
                   )}
                 </div>

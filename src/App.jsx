@@ -1890,11 +1890,11 @@ const handleSelectPlan = (plan) => {
 {/* 月報列表頁面 */}
 {showMonthlyReports && (
   <MonthlyReportsPage
-    monthlyReports={monthlyReports}
-    onClose={() => setShowMonthlyReports(false)}
-    onViewReport={handleViewMonthlyReport}
-    onShowSubscription={() => setShowSubscriptionPlans(true)}
-  />
+  monthlyReports={monthlyReports}
+  onClose={() => setShowMonthlyReports(false)}
+  onViewReport={(report) => setSelectedMonthlyReport(report)}  // ← 改成內聯
+  onShowSubscription={() => setShowSubscriptionPlans(true)}
+/>
 )}
 
 {/* 月報詳細內容頁面 */}

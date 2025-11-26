@@ -107,7 +107,7 @@ export const MonthlyReportCard = ({ letters, onViewReports }) => {
   <div 
     className="h-full rounded-full transition-all"
     style={{ 
-      width: `${Math.min(progress, 100)}%`,  // ← 加 Math.min 限制最大 100%
+      width: `${progress}%`,  // ← 改回原本的，不要 Math.min
       background: 'linear-gradient(to right, #C9A386, #D4A373)'
     }}
   />

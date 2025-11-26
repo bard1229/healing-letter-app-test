@@ -1907,13 +1907,40 @@ const handleSelectPlan = (plan) => {
   />
 )}
 
-{/* 月報測試面板 - 暫時停用 */}
-{/* 
+{/* 月報測試面板 */}
 <MonthlyReportTestPanel
   isDevelopment={isDevelopment}
-  onCreateTestReport={handleCreateTestMonthlyReport}
+  onCreateTestReport={() => {
+    if (monthlyReports.length === 0) {
+      const initialReports = [
+        {
+          id: 'month_2025_11',
+          month: 11,
+          year: 2025,
+          monthStart: '2025-11-01',
+          monthEnd: '2025-11-30',
+          totalDiaries: 15,
+          status: 'pending',
+          generatedAt: new Date().toISOString(),
+          content: {
+            overview: '本月你記錄了 15 天的心情，從這一個月的紀錄看來，你似乎正處在一個相對平穩但也在思考人生方向的階段。',
+            suggestions: ['持續保持自我覺察的習慣', '可以嘗試建立更固定的放鬆儀式', '在感到迷茫時，寫下三個可以採取的小行動'],
+            highlights: {
+              mostFrequent: { emotion: '平靜', emoji: '😌', count: 6 },
+              moodStability: '穩定向上',
+              growth: '+25%'
+            },
+            encouragement: '這個月的你展現了很好的情緒穩定度，繼續保持這份對內在的關注。'
+          }
+        }
+      ];
+      setMonthlyReports(initialReports);
+      alert('✅ 已建立測試月報！');
+    } else {
+      alert('📊 測試資料已存在！');
+    }
+  }}
 />
-*/}
 
       {/* 💳 付款流程 Modal */}
 {paymentFlow.show && paymentFlow.step === 'confirm' && (

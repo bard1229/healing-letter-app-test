@@ -2021,12 +2021,20 @@ function handleCreateTestMonthlyReport() {
     hasTrial={userSubscription?.status === 'trial'}
   />
 )}
-{/* 真實 API 測試按鈕 - 取代舊的 */}
+{/* 真實 API 測試按鈕 */}
 <RealReportTestPanel
   userId={user?.uid}
   onReportGenerated={(type) => {
     console.log(`${type} report generated!`);
-    // 可以重新載入報告列表
+    // 可以在這裡重新載入報告列表
+  }}
+  onNavigateToReport={(type) => {
+    // 跳轉到報告頁面
+    if (type === 'weekly') {
+      setCurrentPage('weeklyReports');  // 或你的週報頁面狀態
+    } else if (type === 'monthly') {
+      setCurrentPage('monthlyReports'); // 或你的月報頁面狀態
+    }
   }}
   isDevelopment={isDevelopment}
 />

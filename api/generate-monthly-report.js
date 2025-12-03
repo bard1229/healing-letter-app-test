@@ -98,7 +98,7 @@ const analyzeEmotions = (diaries) => {
 // 呼叫 Gemini 生成月報內容
 const generateMonthlyContent = async (diaries, emotionStats, monthInfo) => {
   try {
-    const model = genAI.getGenerativeModel({ model: 'gemini-1.5-flash' });
+    const model = genAI.getGenerativeModel({ model: 'gemini-2.5-flash' });
     
     // 準備日記摘要 (如果日記太多,只取部分)
     const sampleSize = Math.min(diaries.length, 20);

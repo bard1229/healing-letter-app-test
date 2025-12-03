@@ -1,8 +1,12 @@
 {
-  "rewrites": [
+  "crons": [
     {
-      "source": "/auth/line/callback",
-      "destination": "/index.html"
+      "path": "/api/cron-weekly-report",
+      "schedule": "0 8 * * 1"
+    },
+    {
+      "path": "/api/cron-monthly-report",
+      "schedule": "0 8 1 * *"
     }
   ]
 }

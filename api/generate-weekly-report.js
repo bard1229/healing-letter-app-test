@@ -1,5 +1,5 @@
 // API Route: /api/generate-weekly-report.js
-// 功能: 生成週報並存入 Firestore
+// 測試版: 生成本週的週報 (而非上週)
 
 import { GoogleGenerativeAI } from '@google/generative-ai';
 import admin from 'firebase-admin';
@@ -23,21 +23,20 @@ const formatDate = (date) => {
   return date.toISOString().split('T')[0];
 };
 
-// 計算週報的日期範圍
+// ⭐ 測試版: 計算本週的日期範圍 (週一到今天)
 const getWeekRange = () => {
   const today = new Date();
   const dayOfWeek = today.getDay();
   const diff = dayOfWeek === 0 ? -6 : 1 - dayOfWeek; // 週一為起點
   
   const monday = new Date(today);
-  monday.setDate(today.getDate() + diff - 7); // 上週一
+  monday.setDate(today.getDate() + diff); // 本週一
   monday.setHours(0, 0, 0, 0);
   
-  const sunday = new Date(monday);
-  sunday.setDate(monday.getDate() + 6); // 上週日
-  sunday.setHours(23, 59, 59, 999);
+  const now = new Date(); // 到現在為止
+  now.setHours(23, 59, 59, 999);
   
-  return { start: monday, end: sunday };
+  return { start: monday, end: now };
 };
 
 // 取得該週的所有日記
@@ -230,12 +229,12 @@ export default async function handler(req, res) {
       return res.status(400).json({ error: '缺少 userId' });
     }
     
-    // 1. 計算週報日期範圍
+    // 1. 計算週報日期範圍 (本週)
     const weekRange = getWeekRange();
     const weekNumber = Math.ceil((weekRange.start.getDate() + 6) / 7);
     const year = weekRange.start.getFullYear();
     
-    console.log(`開始生成週報: ${year}年第${weekNumber}週`);
+    console.log(`🧪 測試模式: 生成本週週報 ${year}年第${weekNumber}週`);
     
     // 2. 取得該週的日記
     const diaries = await getWeeklyDiaries(userId, weekRange.start, weekRange.end);
@@ -269,7 +268,7 @@ export default async function handler(req, res) {
     return res.status(200).json({
       success: true,
       reportId,
-      message: '週報生成成功!',
+      message: '週報生成成功! (測試版-本週)',
       diaryCount: diaries.length
     });
     

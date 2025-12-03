@@ -1,5 +1,5 @@
 // API Route: /api/generate-monthly-report.js
-// 功能: 生成月報並存入 Firestore
+// 測試版: 生成本月的月報 (而非上月)
 
 import { GoogleGenerativeAI } from '@google/generative-ai';
 import admin from 'firebase-admin';
@@ -23,19 +23,19 @@ const formatDate = (date) => {
   return date.toISOString().split('T')[0];
 };
 
-// 計算月報的日期範圍 (上個月)
+// ⭐ 測試版: 計算本月的日期範圍 (本月1號到今天)
 const getMonthRange = () => {
   const today = new Date();
   
-  // 上個月的第一天
-  const firstDay = new Date(today.getFullYear(), today.getMonth() - 1, 1);
+  // 本月的第一天
+  const firstDay = new Date(today.getFullYear(), today.getMonth(), 1);
   firstDay.setHours(0, 0, 0, 0);
   
-  // 上個月的最後一天
-  const lastDay = new Date(today.getFullYear(), today.getMonth(), 0);
-  lastDay.setHours(23, 59, 59, 999);
+  // 今天
+  const now = new Date();
+  now.setHours(23, 59, 59, 999);
   
-  return { start: firstDay, end: lastDay };
+  return { start: firstDay, end: now };
 };
 
 // 取得該月的所有日記
@@ -100,7 +100,7 @@ const generateMonthlyContent = async (diaries, emotionStats, monthInfo) => {
     const model = genAI.getGenerativeModel({ model: 'gemini-1.5-flash' });
     
     // 準備日記摘要 (如果日記太多,只取部分)
-    const sampleSize = Math.min(diaries.length, 20); // 最多取20篇代表
+    const sampleSize = Math.min(diaries.length, 20);
     const sampledDiaries = diaries.length > 20 
       ? diaries.filter((_, index) => index % Math.ceil(diaries.length / 20) === 0).slice(0, 20)
       : diaries;
@@ -192,7 +192,7 @@ ${diarySummaries}
   }
 };
 
-// 計算成長百分比 (簡單版本,可以後續改進)
+// 計算成長百分比
 const calculateGrowth = (diaries) => {
   const positiveEmotions = ['開心', '平靜', '期待', '充實'];
   const firstHalf = diaries.slice(0, Math.floor(diaries.length / 2));
@@ -258,19 +258,19 @@ export default async function handler(req, res) {
       return res.status(400).json({ error: '缺少 userId' });
     }
     
-    // 1. 計算月報日期範圍 (上個月)
+    // 1. 計算月報日期範圍 (本月)
     const monthRange = getMonthRange();
     const month = monthRange.start.getMonth() + 1;
     const year = monthRange.start.getFullYear();
     
-    console.log(`開始生成月報: ${year}年${month}月`);
+    console.log(`🧪 測試模式: 生成本月月報 ${year}年${month}月`);
     
     // 2. 取得該月的日記
     const diaries = await getMonthlyDiaries(userId, monthRange.start, monthRange.end);
     
     if (diaries.length === 0) {
       return res.status(400).json({ 
-        error: '上個月沒有日記記錄',
+        error: '本月沒有日記記錄',
         message: '至少需要1天的記錄才能生成月報'
       });
     }
@@ -301,7 +301,7 @@ export default async function handler(req, res) {
     return res.status(200).json({
       success: true,
       reportId,
-      message: '月報生成成功!',
+      message: '月報生成成功! (測試版-本月)',
       diaryCount: diaries.length
     });
     

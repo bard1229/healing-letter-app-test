@@ -2021,10 +2021,14 @@ function handleCreateTestMonthlyReport() {
     hasTrial={userSubscription?.status === 'trial'}
   />
 )}
-{/* 開發者測試面板 */}
-<WeeklyReportTestPanel
+{/* 真實 API 測試按鈕 - 取代舊的 */}
+<RealReportTestPanel
+  userId={user?.uid}
+  onReportGenerated={(type) => {
+    console.log(`${type} report generated!`);
+    // 可以重新載入報告列表
+  }}
   isDevelopment={isDevelopment}
-  onCreateTestReport={handleCreateTestReport}
 />
 
 {/*// 📝 日記編輯 Modal*/}

@@ -134,3 +134,61 @@ export const analyzeEmotion = async (userInput) => {
     return '迷茫';
   }
 };
+
+// ==================== 新增: 週報/月報生成函數 ====================
+
+/**
+ * 生成週報
+ * @param {string} userId - 使用者 ID
+ * @returns {Promise} API 回應
+ */
+export const generateWeeklyReport = async (userId) => {
+  try {
+    const response = await fetch('/api/generate-weekly-report', {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify({ userId }),
+    });
+    
+    const data = await response.json();
+    
+    if (!response.ok) {
+      throw new Error(data.message || data.error || '生成週報失敗');
+    }
+    
+    return data;
+  } catch (error) {
+    console.error('呼叫週報 API 失敗:', error);
+    throw error;
+  }
+};
+
+/**
+ * 生成月報
+ * @param {string} userId - 使用者 ID
+ * @returns {Promise} API 回應
+ */
+export const generateMonthlyReport = async (userId) => {
+  try {
+    const response = await fetch('/api/generate-monthly-report', {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify({ userId }),
+    });
+    
+    const data = await response.json();
+    
+    if (!response.ok) {
+      throw new Error(data.message || data.error || '生成月報失敗');
+    }
+    
+    return data;
+  } catch (error) {
+    console.error('呼叫月報 API 失敗:', error);
+    throw error;
+  }
+};

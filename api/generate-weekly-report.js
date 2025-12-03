@@ -99,7 +99,7 @@ const analyzeEmotions = (diaries) => {
 // 呼叫 Gemini 生成週報內容
 const generateWeeklyContent = async (diaries, emotionStats) => {
   try {
-    const model = genAI.getGenerativeModel({ model: 'gemini-1.5-flash' });
+    const model = genAI.getGenerativeModel({ model: 'gemini-2.5-flash' });
     
     // 準備日記摘要
     const diarySummaries = diaries.map((diary, index) => {

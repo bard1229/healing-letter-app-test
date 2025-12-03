@@ -1,5 +1,5 @@
 // API Route: /api/generate-weekly-report.js
-// 測試版: 生成本週的週報 (而非上週)
+// 修正版: 使用 letters collection (測試版-本週)
 
 import { GoogleGenerativeAI } from '@google/generative-ai';
 import admin from 'firebase-admin';
@@ -39,11 +39,12 @@ const getWeekRange = () => {
   return { start: monday, end: now };
 };
 
-// 取得該週的所有日記
+// 🔧 修正: 從 letters collection 取得日記
 const getWeeklyDiaries = async (userId, startDate, endDate) => {
   try {
-    const diariesRef = db.collection('users').doc(userId).collection('diaries');
-    const snapshot = await diariesRef
+    const lettersRef = db.collection('letters');
+    const snapshot = await lettersRef
+      .where('userId', '==', userId)
       .where('createdAt', '>=', admin.firestore.Timestamp.fromDate(startDate))
       .where('createdAt', '<=', admin.firestore.Timestamp.fromDate(endDate))
       .orderBy('createdAt', 'asc')
@@ -235,6 +236,7 @@ export default async function handler(req, res) {
     const year = weekRange.start.getFullYear();
     
     console.log(`🧪 測試模式: 生成本週週報 ${year}年第${weekNumber}週`);
+    console.log(`📅 日期範圍: ${formatDate(weekRange.start)} ~ ${formatDate(weekRange.end)}`);
     
     // 2. 取得該週的日記
     const diaries = await getWeeklyDiaries(userId, weekRange.start, weekRange.end);
@@ -246,13 +248,13 @@ export default async function handler(req, res) {
       });
     }
     
-    console.log(`找到 ${diaries.length} 篇日記`);
+    console.log(`✅ 找到 ${diaries.length} 篇日記`);
     
     // 3. 分析情緒統計
     const emotionStats = analyzeEmotions(diaries);
     
     // 4. 呼叫 Gemini 生成內容
-    console.log('呼叫 Gemini API 生成內容...');
+    console.log('🤖 呼叫 Gemini API 生成內容...');
     const content = await generateWeeklyContent(diaries, emotionStats);
     
     // 5. 儲存到 Firestore
@@ -263,7 +265,7 @@ export default async function handler(req, res) {
       emotionStats
     );
     
-    console.log(`週報生成成功: ${reportId}`);
+    console.log(`🎉 週報生成成功: ${reportId}`);
     
     return res.status(200).json({
       success: true,
@@ -273,7 +275,7 @@ export default async function handler(req, res) {
     });
     
   } catch (error) {
-    console.error('生成週報錯誤:', error);
+    console.error('❌ 生成週報錯誤:', error);
     return res.status(500).json({
       error: '生成週報失敗',
       message: error.message

@@ -1,5 +1,5 @@
 // API Route: /api/generate-monthly-report.js
-// 測試版: 生成本月的月報 (而非上月)
+// 修正版: 使用 letters collection (測試版-本月)
 
 import { GoogleGenerativeAI } from '@google/generative-ai';
 import admin from 'firebase-admin';
@@ -38,11 +38,12 @@ const getMonthRange = () => {
   return { start: firstDay, end: now };
 };
 
-// 取得該月的所有日記
+// 🔧 修正: 從 letters collection 取得日記
 const getMonthlyDiaries = async (userId, startDate, endDate) => {
   try {
-    const diariesRef = db.collection('users').doc(userId).collection('diaries');
-    const snapshot = await diariesRef
+    const lettersRef = db.collection('letters');
+    const snapshot = await lettersRef
+      .where('userId', '==', userId)
       .where('createdAt', '>=', admin.firestore.Timestamp.fromDate(startDate))
       .where('createdAt', '<=', admin.firestore.Timestamp.fromDate(endDate))
       .orderBy('createdAt', 'asc')
@@ -264,6 +265,7 @@ export default async function handler(req, res) {
     const year = monthRange.start.getFullYear();
     
     console.log(`🧪 測試模式: 生成本月月報 ${year}年${month}月`);
+    console.log(`📅 日期範圍: ${formatDate(monthRange.start)} ~ ${formatDate(monthRange.end)}`);
     
     // 2. 取得該月的日記
     const diaries = await getMonthlyDiaries(userId, monthRange.start, monthRange.end);
@@ -275,13 +277,13 @@ export default async function handler(req, res) {
       });
     }
     
-    console.log(`找到 ${diaries.length} 篇日記`);
+    console.log(`✅ 找到 ${diaries.length} 篇日記`);
     
     // 3. 分析情緒統計
     const emotionStats = analyzeEmotions(diaries);
     
     // 4. 呼叫 Gemini 生成內容
-    console.log('呼叫 Gemini API 生成月報內容...');
+    console.log('🤖 呼叫 Gemini API 生成月報內容...');
     const content = await generateMonthlyContent(
       diaries, 
       emotionStats,
@@ -296,7 +298,7 @@ export default async function handler(req, res) {
       emotionStats
     );
     
-    console.log(`月報生成成功: ${reportId}`);
+    console.log(`🎉 月報生成成功: ${reportId}`);
     
     return res.status(200).json({
       success: true,
@@ -306,7 +308,7 @@ export default async function handler(req, res) {
     });
     
   } catch (error) {
-    console.error('生成月報錯誤:', error);
+    console.error('❌ 生成月報錯誤:', error);
     return res.status(500).json({
       error: '生成月報失敗',
       message: error.message

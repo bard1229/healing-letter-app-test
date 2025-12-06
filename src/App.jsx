@@ -268,6 +268,12 @@ const handleStartPayment = (plan) => {
 
 const handleConfirmPayment = async (plan) => {
   try {
+    // 🧪 測試模式：直接模擬付款成功  ← 這裡開始貼
+    if (isDevelopment) {
+      console.log('🧪 測試模式：模擬付款成功');
+      ...
+      return;
+    }
     localStorage.setItem('pendingPayment', JSON.stringify(plan));
     redirectToPayPal(plan);
   } catch (error) {

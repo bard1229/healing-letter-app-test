@@ -303,7 +303,26 @@ const handlePaymentSuccess = async (paymentData) => {
     if (!plan) {
       throw new Error('找不到訂單資訊');
     }
-
+// 🧪 測試模式：儲存到 state ← 這裡開始貼 
+    if (isDevelopment) {
+  // 不寫 Firestore,只更新 state
+  
+  // 訂閱方案
+  if (plan.id === 'trial' || plan.id === 'monthly' || plan.id === 'yearly') {
+    setUserSubscription({...});
+  }
+  
+  // 單次解鎖
+  if (plan.id === 'single') {
+    // 更新對應報告的 status = 'paid'
+    setWeeklyReports(prev => ...);
+    setMonthlyReports(prev => ...);
+  }
+  
+  // 顯示成功頁面
+  setPaymentFlow({ show: true, step: 'success', plan });
+  return;
+}
     const userRef = doc(db, 'users', user.uid);
     await setDoc(userRef, {
       subscription: {

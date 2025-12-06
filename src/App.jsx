@@ -2031,9 +2031,9 @@ function handleCreateTestMonthlyReport() {
   onNavigateToReport={(type) => {
     // 跳轉到報告頁面
     if (type === 'weekly') {
-      setCurrentPage('weeklyReports');  // 或你的週報頁面狀態
+      setShowWeeklyReports(true);  // 或你的週報頁面狀態
     } else if (type === 'monthly') {
-      setCurrentPage('monthlyReports'); // 或你的月報頁面狀態
+      setShowMonthlyReports(true); // 或你的月報頁面狀態
     }
   }}
   isDevelopment={isDevelopment}

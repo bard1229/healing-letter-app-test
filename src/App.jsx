@@ -237,12 +237,11 @@ const handleStartPayment = (plan) => {
   if (isDevelopment) {
     if (plan.id === 'trial') {
       // 免費試用
-      setUserSubscription({
-        status: 'trial',
-        plan: 'trial',
-        startDate: new Date().toISOString(),
-        endDate: new Date(Date.now() + 7 * 24 * 60 * 60 * 1000).toISOString()
-      });
+      setPaymentFlow({
+    show: true,
+    step: 'confirm',
+    plan: plan
+  });
       alert('🎉 免費試用已開通！7 天內可免費查看週報');
     } else if (plan.id === 'monthly' || plan.id === 'yearly') {
       // 月訂閱或年訂閱

@@ -233,28 +233,16 @@ const isDevelopment = true;
 const handleStartPayment = (plan) => {
   console.log('選擇方案:', plan);
   
-  // 測試模式：直接訂閱（不需要付款）
+  // 🧪 測試模式：顯示付款確認介面
   if (isDevelopment) {
-    if (plan.id === 'trial') {
-      // 免費試用
-      setPaymentFlow({
-    show: true,
-    step: 'confirm',
-    plan: plan
-  });
-      alert('🎉 免費試用已開通！7 天內可免費查看週報');
-    } else if (plan.id === 'monthly' || plan.id === 'yearly') {
-      // 月訂閱或年訂閱
-      setUserSubscription({
-        status: 'active',
-        plan: plan.id,
-        startDate: new Date().toISOString(),
-        endDate: new Date(Date.now() + 30 * 24 * 60 * 60 * 1000).toISOString()
-      });
-      alert(`🎉 ${plan.name}訂閱成功！(測試模式)`);
-    }
-    setShowSubscriptionPlans(false);
-    return;  // 測試模式下直接結束，不執行下面的付款流程
+    setPaymentFlow({
+      show: true,
+      step: 'confirm',
+      plan: plan,
+      error: null
+    });
+    setShowSubscriptionPlans(false); // 關閉方案頁面
+    return;
   }
   
   // 正式模式：顯示付款確認頁面

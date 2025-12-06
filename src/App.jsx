@@ -256,21 +256,26 @@ const handleStartPayment = (plan) => {
 
 const handleConfirmPayment = async (plan) => {
   try {
-    // 🧪 測試模式：直接模擬付款成功  ← 這裡開始貼
-   if (isDevelopment) {
-  // 模擬 1 秒處理時間
-  await new Promise(resolve => setTimeout(resolve, 1000));
-  
-  // 模擬付款成功
-  const mockPaymentData = {
-    transactionId: `TEST_${Date.now()}`,
-    amount: plan.price || 0,
-    status: 'completed'
-  };
-  
-  await handlePaymentSuccess(mockPaymentData);
-  return;
-}
+    // 🧪 測試模式：直接模擬付款成功
+    if (isDevelopment) {
+      console.log('🧪 測試模式：模擬付款成功');
+      
+      // 模擬處理時間 (1秒)
+      await new Promise(resolve => setTimeout(resolve, 1000));
+      
+      // 模擬付款資料
+      const mockPaymentData = {
+        transactionId: `TEST_${Date.now()}`,
+        amount: plan.price || 0,
+        status: 'completed'
+      };
+      
+      // 直接呼叫成功處理
+      await handlePaymentSuccess(mockPaymentData);
+      return;
+    }
+    
+    // 正式模式：跳轉 PayPal
     localStorage.setItem('pendingPayment', JSON.stringify(plan));
     redirectToPayPal(plan);
   } catch (error) {
@@ -286,31 +291,67 @@ const handleConfirmPayment = async (plan) => {
 const handlePaymentSuccess = async (paymentData) => {
   try {
     const pendingPayment = localStorage.getItem('pendingPayment');
-    const plan = pendingPayment ? JSON.parse(pendingPayment) : null;
+    const plan = pendingPayment ? JSON.parse(pendingPayment) : paymentFlow.plan;
 
     if (!plan) {
       throw new Error('找不到訂單資訊');
     }
-// 🧪 測試模式：儲存到 state ← 這裡開始貼 
+
+    // 🧪 測試模式：儲存到 state (不寫 Firestore)
     if (isDevelopment) {
-  // 不寫 Firestore,只更新 state
-  
-  // 訂閱方案
-  if (plan.id === 'trial' || plan.id === 'monthly' || plan.id === 'yearly') {
-    setUserSubscription({...});
-  }
-  
-  // 單次解鎖
-  if (plan.id === 'single') {
-    // 更新對應報告的 status = 'paid'
-    setWeeklyReports(prev => ...);
-    setMonthlyReports(prev => ...);
-  }
-  
-  // 顯示成功頁面
-  setPaymentFlow({ show: true, step: 'success', plan });
-  return;
-}
+      console.log('🧪 測試模式：更新訂閱狀態', plan);
+      
+      // 更新訂閱狀態
+      if (plan.id === 'trial') {
+        setUserSubscription({
+          planId: 'trial',
+          status: 'trial',
+          startDate: new Date().toISOString(),
+          endDate: new Date(Date.now() + 7 * 24 * 60 * 60 * 1000).toISOString()
+        });
+      } else if (plan.id === 'monthly' || plan.id === 'yearly') {
+        const duration = plan.id === 'monthly' ? 30 : 365;
+        setUserSubscription({
+          planId: plan.id,
+          status: 'active',
+          startDate: new Date().toISOString(),
+          endDate: new Date(Date.now() + duration * 24 * 60 * 60 * 1000).toISOString()
+        });
+      } else if (plan.id === 'single') {
+        // 單次解鎖：標記該報告為已付費
+        console.log('🧪 解鎖報告:', plan.reportType, plan.reportId);
+        
+        // 這裡需要更新 weeklyReports 或 monthlyReports 的 status
+        if (plan.reportType === 'weekly') {
+          setWeeklyReports(prev => prev.map(report => 
+            report.id === plan.reportId 
+              ? { ...report, status: 'paid', paidAt: new Date().toISOString() }
+              : report
+          ));
+        } else if (plan.reportType === 'monthly') {
+          setMonthlyReports(prev => prev.map(report => 
+            report.id === plan.reportId 
+              ? { ...report, status: 'paid', paidAt: new Date().toISOString() }
+              : report
+          ));
+        }
+      }
+      
+      // 清除暫存
+      localStorage.removeItem('pendingPayment');
+      
+      // 顯示成功頁面
+      setPaymentFlow({
+        show: true,
+        step: 'success',
+        plan: plan,
+        error: null
+      });
+      
+      return;
+    }
+
+    // 正式模式：寫入 Firestore
     const userRef = doc(db, 'users', user.uid);
     await setDoc(userRef, {
       subscription: {
@@ -352,6 +393,66 @@ const handlePaymentSuccess = async (paymentData) => {
     });
   }
 };
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 
 const handlePaymentCancel = () => {
   const pendingPayment = localStorage.getItem('pendingPayment');

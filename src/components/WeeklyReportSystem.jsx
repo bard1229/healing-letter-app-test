@@ -291,12 +291,21 @@ const WeeklyReportListItem = ({ report, index, onView }) => {
     } else if (report.status === 'claimed') {
       return (
         <button 
-          onClick={() => onView()}
-          className="px-6 py-2 rounded-xl text-sm font-medium transition-all hover:shadow-lg"
-          style={{ background: '#FFD700', color: '#5A4A42' }}
-        >
-          💎 解鎖 NT$ 49
-        </button>
+  onClick={() => onView({
+    action: 'unlock',
+    plan: {
+      id: 'single',
+      name: '單次解鎖',
+      price: 49,
+      reportType: 'weekly',
+      reportId: report.id  // ← 傳遞報告 ID
+    }
+  })}
+  className="..."
+  style={{ background: '#FFD700', color: '#5A4A42' }}
+>
+  💎 解鎖 NT$ 49
+</button>
       );
     } else {
       return (

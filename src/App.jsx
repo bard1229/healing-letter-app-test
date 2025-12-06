@@ -269,11 +269,20 @@ const handleStartPayment = (plan) => {
 const handleConfirmPayment = async (plan) => {
   try {
     // 🧪 測試模式：直接模擬付款成功  ← 這裡開始貼
-    if (isDevelopment) {
-      console.log('🧪 測試模式：模擬付款成功');
-      ...
-      return;
-    }
+   if (isDevelopment) {
+  // 模擬 1 秒處理時間
+  await new Promise(resolve => setTimeout(resolve, 1000));
+  
+  // 模擬付款成功
+  const mockPaymentData = {
+    transactionId: `TEST_${Date.now()}`,
+    amount: plan.price || 0,
+    status: 'completed'
+  };
+  
+  await handlePaymentSuccess(mockPaymentData);
+  return;
+}
     localStorage.setItem('pendingPayment', JSON.stringify(plan));
     redirectToPayPal(plan);
   } catch (error) {
